@@ -32,6 +32,7 @@ const refs = {
   recommendations: document.getElementById("recommendations"),
   consumptionChart: document.getElementById("consumptionChart"),
   priceChart: document.getElementById("priceChart"),
+  spotComparisonChart: document.getElementById("spotComparisonChart"),
   planChart: document.getElementById("planChart"),
   planTableBody: document.getElementById("planTableBody"),
   dailyTrendChart: document.getElementById("dailyTrendChart"),
@@ -312,6 +313,7 @@ function renderDashboard(dashboard) {
   renderRecommendations(dashboard.recommendations);
   renderHourlyChart(refs.consumptionChart, dashboard.charts.consumptionHourly, "consumption", dashboard.priceSignals);
   renderHourlyChart(refs.priceChart, dashboard.charts.priceHourly, "price", dashboard.priceSignals);
+  renderSpotComparisonChart(dashboard.charts.consumptionHourly, dashboard.charts.priceHourly);
   renderPlanChart(dashboard.planRows);
   renderPlanTable(dashboard.planRows);
   renderDailyTrend(dashboard.charts.dailyTrend);
@@ -463,6 +465,43 @@ function renderPlanChart(rows) {
     <div class="mini-legend">
       <span><i class="legend-consumption"></i>Patēriņš</span>
       <span><i class="legend-cost"></i>Darbības ieteikums</span>
+    </div>
+  `;
+}
+
+function renderSpotComparisonChart(consumptionItems, priceItems) {
+  if (!Array.isArray(consumptionItems) || !Array.isArray(priceItems) || consumptionItems.length === 0 || priceItems.length === 0) {
+    renderSingleChartState(refs.spotComparisonChart, "error", "SPOT profila salīdzinājums nav pieejams.");
+    return;
+  }
+
+  const consumptionMap = new Map(consumptionItems.map((item) => [item.hour, item.consumption]));
+  const maxConsumption = Math.max(...consumptionItems.map((item) => item.consumption), 1);
+  const maxPrice = Math.max(...priceItems.map((item) => item.price), 1);
+
+  refs.spotComparisonChart.innerHTML = `
+    <div class="comparison-chart">
+      ${priceItems
+        .map((priceItem) => {
+          const hour = priceItem.hour;
+          const consumption = consumptionMap.get(hour) ?? 0;
+          const consumptionPercent = Math.max(8, Math.round((consumption / maxConsumption) * 100));
+          const pricePercent = Math.max(8, Math.round((priceItem.price / maxPrice) * 100));
+          return `
+            <div class="comparison-step" title="${escapeHtml(hour)} — ${escapeHtml(numberFormat.format(consumption))} kWh / ${escapeHtml(numberFormat.format(priceItem.price))} €/MWh">
+              <div class="comparison-bars">
+                <span class="comparison-bar comparison-consumption" style="height:${consumptionPercent}%"></span>
+                <span class="comparison-bar comparison-price" style="height:${pricePercent}%"></span>
+              </div>
+              <div class="comparison-label">${escapeHtml(hour.slice(0, 2))}</div>
+            </div>
+          `;
+        })
+        .join("")}
+    </div>
+    <div class="mini-legend">
+      <span><i class="legend-consumption"></i>Klienta patēriņš</span>
+      <span><i class="legend-price"></i>SPOT cena</span>
     </div>
   `;
 }

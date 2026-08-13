@@ -645,6 +645,62 @@ thead th {
   background: linear-gradient(180deg, #8dbbf9 0%, #3a7df1 100%);
 }
 
+.comparison-chart {
+  display: grid;
+  grid-template-columns: repeat(24, minmax(0, 1fr));
+  align-items: end;
+  gap: 8px;
+  min-height: 220px;
+  padding: 10px 6px 0;
+}
+
+.comparison-step {
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+  min-height: 190px;
+}
+
+.comparison-bars {
+  display: flex;
+  align-items: end;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  min-height: 150px;
+}
+
+.comparison-bar {
+  display: block;
+  width: 10px;
+  min-height: 14px;
+  border-radius: 10px 10px 5px 5px;
+  box-shadow: 0 8px 18px rgba(31, 72, 160, 0.14);
+}
+
+.comparison-consumption {
+  background: linear-gradient(180deg, #8dbbf9 0%, #3b7ef3 100%);
+}
+
+.comparison-price {
+  background: linear-gradient(180deg, #8fe6c4 0%, #17a680 100%);
+}
+
+.comparison-label {
+  font-size: 0.68rem;
+  font-weight: 800;
+  color: #173d67;
+}
+
+.legend-price {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border-radius: 4px;
+  margin-right: 6px;
+  background: linear-gradient(180deg, #8fe6c4 0%, #17a680 100%);
+}
+
 .chart-card {
   min-height: 320px;
   position: relative;
