@@ -90,6 +90,38 @@ function wireEvents() {
     refs.equipmentPowerInput.value = "";
     refreshDashboard("Atjauno sākotnējo scenāriju...");
   });
+
+  document.querySelectorAll(".chart-card").forEach((card) => {
+    card.setAttribute("tabindex", "0");
+    card.setAttribute("role", "button");
+    card.setAttribute("aria-label", `${card.id ? "Palielināt grafiku" : "Palielināt grafiku"}`);
+    card.setAttribute("aria-expanded", "false");
+    card.addEventListener("click", () => toggleChartExpansion(card));
+    card.addEventListener("keydown", (event) => {
+      if (event.key === "Enter" || event.key === " ") {
+        event.preventDefault();
+        toggleChartExpansion(card);
+      }
+    });
+  });
+}
+
+function toggleChartExpansion(card) {
+  if (!card || !card.classList.contains("chart-card")) {
+    return;
+  }
+
+  const isExpanded = card.classList.toggle("chart-expanded");
+  card.setAttribute("aria-expanded", String(isExpanded));
+
+  document.querySelectorAll(".chart-card").forEach((otherCard) => {
+    if (otherCard !== card && otherCard.classList.contains("chart-expanded")) {
+      otherCard.classList.remove("chart-expanded");
+      otherCard.setAttribute("aria-expanded", "false");
+    }
+  });
+
+  card.title = isExpanded ? "Noklikšķiniet, lai samazinātu" : "Noklikšķiniet, lai palielinātu";
 }
 
 async function refreshDashboard(message) {

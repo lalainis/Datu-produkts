@@ -538,7 +538,7 @@ thead th {
   min-height: 320px;
   position: relative;
   cursor: zoom-in;
-  transition: transform 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
+  transition: transform 0.18s ease, box-shadow 0.18s ease, background 0.18s ease, min-height 0.2s ease;
   padding-top: 20px;
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.02)),
@@ -565,6 +565,16 @@ thead th {
   z-index: 2;
 }
 
+.chart-card.chart-expanded {
+  min-height: 520px;
+  cursor: zoom-out;
+  box-shadow: 0 26px 52px rgba(0, 0, 0, 0.24);
+}
+
+.chart-card.chart-expanded::after {
+  content: "Klikšķini, lai samazinātu";
+}
+
 .chart-card:hover,
 .chart-card:focus-visible {
   transform: translateY(-2px);
@@ -574,6 +584,18 @@ thead th {
 .chart-card:focus-visible {
   outline: 2px solid rgba(107, 168, 255, 0.7);
   outline-offset: 4px;
+}
+
+.split-layout .panel:has(.chart-card.chart-expanded) {
+  grid-column: 1 / -1;
+}
+
+.chart-card.chart-expanded .bars {
+  min-height: 460px;
+}
+
+.chart-card.chart-expanded .trend {
+  min-height: 420px;
 }
 
 .bars {
