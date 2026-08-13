@@ -60,6 +60,7 @@ initialise().catch((error) => {
 });
 
 async function initialise() {
+  closeChartModal();
   setLoadingState(true, "Ielādē backend kopsavilkumu...");
   renderChartLoadingState();
   state.bootstrap = await fetchJson("/api/bootstrap");
@@ -463,8 +464,12 @@ function renderSingleChartState(container, tone, message) {
 }
 
 function openChartModal(chartId) {
+  if (!chartId || typeof chartId !== "string") {
+    return;
+  }
+
   const source = document.getElementById(chartId);
-  if (!source) {
+  if (!source || !source.classList.contains("chart-popup-trigger")) {
     return;
   }
 
