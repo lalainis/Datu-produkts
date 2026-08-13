@@ -3,6 +3,7 @@ const state = {
   dashboard: null,
   selectedObjectId: null,
   requestToken: 0,
+  activeModalChartId: null,
 };
 
 const refs = {
@@ -32,6 +33,13 @@ const refs = {
   planTableBody: document.getElementById("planTableBody"),
   dailyTrendChart: document.getElementById("dailyTrendChart"),
   alertsTableBody: document.getElementById("alertsTableBody"),
+  chartModal: document.getElementById("chartModal"),
+  chartModalTitle: document.getElementById("chartModalTitle"),
+  chartModalDescription: document.getElementById("chartModalDescription"),
+  chartModalContent: document.getElementById("chartModalContent"),
+  prevChartModalButton: document.getElementById("prevChartModalButton"),
+  nextChartModalButton: document.getElementById("nextChartModalButton"),
+  closeChartModalButton: document.getElementById("closeChartModalButton"),
 };
 
 const numberFormat = new Intl.NumberFormat("lv-LV", {
@@ -53,12 +61,14 @@ initialise().catch((error) => {
 
 async function initialise() {
   setLoadingState(true, "Ielādē backend kopsavilkumu...");
+  renderChartLoadingState();
   state.bootstrap = await fetchJson("/api/bootstrap");
   state.selectedObjectId = state.bootstrap.defaultObjectId;
   populateObjectSelect(state.bootstrap.objects, state.selectedObjectId);
   renderGlobalSummary(state.bootstrap);
   renderPortfolio(state.bootstrap.portfolio);
   wireEvents();
+  wireChartPopups();
   await refreshDashboard("Aprēķina objekta analītiku...");
 }
 
@@ -90,6 +100,48 @@ function wireEvents() {
   });
 }
 
+function wireChartPopups() {
+  document.querySelectorAll(".chart-popup-trigger").forEach((element) => {
+    element.addEventListener("click", () => {
+      openChartModal(element.id);
+    });
+    element.addEventListener("keydown", (event) => {
+      if (event.key === "Enter" || event.key === " ") {
+        event.preventDefault();
+        openChartModal(element.id);
+      }
+    });
+  });
+
+  refs.prevChartModalButton.addEventListener("click", () => {
+    stepChartModal(-1);
+  });
+  refs.nextChartModalButton.addEventListener("click", () => {
+    stepChartModal(1);
+  });
+  refs.closeChartModalButton.addEventListener("click", closeChartModal);
+  refs.chartModal.addEventListener("click", (event) => {
+    if (event.target instanceof HTMLElement && event.target.dataset.closeModal === "true") {
+      closeChartModal();
+    }
+  });
+
+  document.addEventListener("keydown", (event) => {
+    if (refs.chartModal.hidden) {
+      return;
+    }
+    if (event.key === "Escape") {
+      closeChartModal();
+    } else if (event.key === "ArrowLeft") {
+      event.preventDefault();
+      stepChartModal(-1);
+    } else if (event.key === "ArrowRight") {
+      event.preventDefault();
+      stepChartModal(1);
+    }
+  });
+}
+
 async function refreshDashboard(message) {
   if (!state.selectedObjectId) {
     return;
@@ -97,6 +149,7 @@ async function refreshDashboard(message) {
 
   const token = ++state.requestToken;
   setLoadingState(true, message);
+  renderChartLoadingState();
   try {
     const params = new URLSearchParams({
       objectId: state.selectedObjectId,
@@ -123,6 +176,7 @@ async function refreshDashboard(message) {
     refs.heroStatus.textContent = "Backend kļūda";
     refs.heroStatus.className = "hero-status error";
     refs.refreshButton.disabled = false;
+    renderChartErrorState("Neizdevās ielādēt grafiku datus. Mēģini pārlādēt lapu vai atkārtot pieprasījumu.");
   }
 }
 
@@ -212,6 +266,7 @@ function renderDashboard(dashboard) {
   renderPlanTable(dashboard.planRows);
   renderDailyTrend(dashboard.charts.dailyTrend);
   renderAlerts(dashboard.alerts);
+  syncOpenChartModal();
 }
 
 function renderStatusChips(chips) {
@@ -284,6 +339,11 @@ function renderRecommendations(recommendations) {
 }
 
 function renderHourlyChart(container, items, mode, signals) {
+  if (!Array.isArray(items) || items.length === 0) {
+    renderSingleChartState(container, "error", "Šim grafikam nav pieejamu datu.");
+    return;
+  }
+
   const maxValue = Math.max(...items.map((item) => item[mode === "consumption" ? "consumption" : "price"]));
   const cheapSet = new Set(signals.cheapestHours.map((item) => item.hour));
   const expensiveSet = new Set(signals.expensiveHours.map((item) => item.hour));
@@ -331,6 +391,11 @@ function renderPlanTable(rows) {
 }
 
 function renderDailyTrend(days) {
+  if (!Array.isArray(days) || days.length === 0) {
+    renderSingleChartState(refs.dailyTrendChart, "error", "Nav pieejamu pēdējo 30 dienu datu.");
+    return;
+  }
+
   const maxConsumption = Math.max(...days.map((item) => item.consumption));
   const maxCost = Math.max(...days.map((item) => item.cost));
   refs.dailyTrendChart.innerHTML = `
@@ -373,6 +438,79 @@ function renderAlerts(alerts) {
       `
     )
     .join("");
+}
+
+function renderChartLoadingState() {
+  [refs.consumptionChart, refs.priceChart, refs.dailyTrendChart].forEach((container) => {
+    renderSingleChartState(container, "loading", "Grafiks tiek ielādēts...");
+  });
+}
+
+function renderChartErrorState(message) {
+  [refs.consumptionChart, refs.priceChart, refs.dailyTrendChart].forEach((container) => {
+    renderSingleChartState(container, "error", message);
+  });
+}
+
+function renderSingleChartState(container, tone, message) {
+  container.innerHTML = `
+    <div class="chart-state ${tone}">
+      <div class="chart-state-icon">${tone === "loading" ? "◌" : "!"}</div>
+      <strong>${tone === "loading" ? "Ielāde" : "Grafiks nav pieejams"}</strong>
+      <p>${escapeHtml(message)}</p>
+    </div>
+  `;
+}
+
+function openChartModal(chartId) {
+  const source = document.getElementById(chartId);
+  if (!source) {
+    return;
+  }
+
+  state.activeModalChartId = chartId;
+  refs.chartModalTitle.textContent = source.dataset.chartTitle || "Grafiks";
+  refs.chartModalDescription.textContent = source.dataset.chartDescription || "";
+  refs.chartModalContent.innerHTML = source.innerHTML;
+  syncModalNavigationButtons();
+  refs.chartModal.hidden = false;
+  document.body.classList.add("modal-open");
+  refs.closeChartModalButton.focus();
+}
+
+function closeChartModal() {
+  state.activeModalChartId = null;
+  refs.chartModal.hidden = true;
+  refs.chartModalContent.innerHTML = "";
+  document.body.classList.remove("modal-open");
+}
+
+function syncOpenChartModal() {
+  if (!state.activeModalChartId || refs.chartModal.hidden) {
+    return;
+  }
+  openChartModal(state.activeModalChartId);
+}
+
+function getChartTriggerIds() {
+  return Array.from(document.querySelectorAll(".chart-popup-trigger")).map((element) => element.id);
+}
+
+function stepChartModal(step) {
+  const chartIds = getChartTriggerIds();
+  const currentIndex = chartIds.indexOf(state.activeModalChartId);
+  if (currentIndex === -1 || chartIds.length < 2) {
+    return;
+  }
+  const nextIndex = (currentIndex + step + chartIds.length) % chartIds.length;
+  openChartModal(chartIds[nextIndex]);
+}
+
+function syncModalNavigationButtons() {
+  const chartIds = getChartTriggerIds();
+  const hasMultipleCharts = chartIds.length > 1;
+  refs.prevChartModalButton.disabled = !hasMultipleCharts;
+  refs.nextChartModalButton.disabled = !hasMultipleCharts;
 }
 
 function setLoadingState(isLoading, message) {

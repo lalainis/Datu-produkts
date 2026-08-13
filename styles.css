@@ -40,6 +40,10 @@ body {
     linear-gradient(180deg, #09111f 0%, #07101c 100%);
 }
 
+body.modal-open {
+  overflow: hidden;
+}
+
 .app-shell {
   max-width: 1600px;
   margin: 0 auto;
@@ -532,6 +536,44 @@ thead th {
 
 .chart-card {
   min-height: 320px;
+  position: relative;
+  cursor: zoom-in;
+  transition: transform 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
+  padding-top: 20px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.02)),
+    repeating-linear-gradient(
+      to top,
+      rgba(255, 255, 255, 0.035) 0,
+      rgba(255, 255, 255, 0.035) 1px,
+      transparent 1px,
+      transparent 56px
+    );
+}
+
+.chart-card::after {
+  content: "Klikšķini, lai palielinātu";
+  position: absolute;
+  top: 0;
+  right: 0;
+  padding: 8px 10px;
+  border-radius: 0 0 0 12px;
+  background: rgba(255, 255, 255, 0.07);
+  color: #dce8fb;
+  font-size: 0.76rem;
+  letter-spacing: 0.03em;
+  z-index: 2;
+}
+
+.chart-card:hover,
+.chart-card:focus-visible {
+  transform: translateY(-2px);
+  box-shadow: 0 18px 32px rgba(0, 0, 0, 0.2);
+}
+
+.chart-card:focus-visible {
+  outline: 2px solid rgba(107, 168, 255, 0.7);
+  outline-offset: 4px;
 }
 
 .bars {
@@ -555,34 +597,41 @@ thead th {
 
 .bar-value {
   font-size: 0.72rem;
-  color: var(--muted);
+  color: #f2f7ff;
+  font-weight: 700;
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.28);
 }
 
 .bar-caption {
   font-size: 0.76rem;
-  color: #dce8fb;
+  color: #edf4ff;
+  font-weight: 600;
 }
 
 .bar {
   border-radius: 14px 14px 8px 8px;
   min-height: 16px;
-  background: linear-gradient(180deg, #79b6ff 0%, #397dff 100%);
+  background: linear-gradient(180deg, #9fd1ff 0%, #4f94ff 100%);
+  box-shadow: 0 10px 20px rgba(79, 148, 255, 0.24);
 }
 
 .bar.success {
-  background: linear-gradient(180deg, #77f0c4 0%, #28b98a 100%);
+  background: linear-gradient(180deg, #9affd9 0%, #34d19f 100%);
+  box-shadow: 0 10px 20px rgba(52, 209, 159, 0.22);
 }
 
 .bar.warning {
-  background: linear-gradient(180deg, #ffd98b 0%, #dca138 100%);
+  background: linear-gradient(180deg, #ffe9ae 0%, #f0b54a 100%);
+  box-shadow: 0 10px 20px rgba(240, 181, 74, 0.22);
 }
 
 .bar.danger {
-  background: linear-gradient(180deg, #ff9aa4 0%, #e45361 100%);
+  background: linear-gradient(180deg, #ffbec5 0%, #ff6777 100%);
+  box-shadow: 0 10px 20px rgba(255, 103, 119, 0.22);
 }
 
 .bar.neutral {
-  background: linear-gradient(180deg, #79b6ff 0%, #397dff 100%);
+  background: linear-gradient(180deg, #9fd1ff 0%, #4f94ff 100%);
 }
 
 .table-wrap {
@@ -644,20 +693,22 @@ tbody td {
 .trend-bars span {
   display: block;
   border-radius: 8px;
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.18);
 }
 
 .trend-consumption {
-  background: linear-gradient(180deg, #8bc2ff 0%, #3477ff 100%);
+  background: linear-gradient(180deg, #a3d4ff 0%, #4e93ff 100%);
 }
 
 .trend-cost {
-  background: linear-gradient(180deg, #76edbf 0%, #29bb8a 100%);
+  background: linear-gradient(180deg, #9affd8 0%, #30cf9a 100%);
 }
 
 .trend-label,
 .mini-legend {
   font-size: 0.74rem;
-  color: var(--muted);
+  color: #edf4ff;
+  font-weight: 600;
 }
 
 .legend-consumption,
@@ -675,6 +726,163 @@ tbody td {
 
 .legend-cost {
   background: linear-gradient(180deg, #76edbf 0%, #29bb8a 100%);
+}
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+}
+
+.modal-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(4, 10, 19, 0.72);
+  backdrop-filter: blur(10px);
+}
+
+.modal-panel {
+  position: relative;
+  z-index: 1;
+  width: min(1200px, calc(100vw - 32px));
+  max-height: calc(100vh - 32px);
+  overflow: auto;
+  padding: 24px;
+  border-radius: 28px;
+  background: rgba(10, 19, 34, 0.95);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.45);
+}
+
+.modal-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: center;
+  margin-bottom: 18px;
+}
+
+.modal-head p {
+  margin-bottom: 0;
+  color: var(--muted);
+}
+
+.modal-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.modal-nav-button,
+.modal-close-button {
+  width: 44px;
+  height: 44px;
+  border: 0;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text);
+  line-height: 1;
+  cursor: pointer;
+  transition: background 0.16s ease, transform 0.16s ease, opacity 0.16s ease;
+}
+
+.modal-nav-button {
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+
+.modal-close-button {
+  font-size: 1.8rem;
+}
+
+.modal-nav-button:hover,
+.modal-close-button:hover {
+  background: rgba(255, 255, 255, 0.14);
+  transform: translateY(-1px);
+}
+
+.modal-nav-button:disabled {
+  opacity: 0.45;
+  cursor: default;
+  transform: none;
+}
+
+.modal-chart-content {
+  min-height: 360px;
+}
+
+.modal-chart-content .bars {
+  min-height: 420px;
+}
+
+.modal-chart-content .trend {
+  min-height: 320px;
+}
+
+.modal-chart-content .bar-value {
+  font-size: 0.82rem;
+}
+
+.modal-chart-content .bar-caption,
+.modal-chart-content .trend-label {
+  font-size: 0.8rem;
+}
+
+.chart-state {
+  min-height: 280px;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 10px;
+  text-align: center;
+  padding: 24px;
+  border-radius: 20px;
+  border: 1px dashed rgba(255, 255, 255, 0.16);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.chart-state strong {
+  font-size: 1.05rem;
+}
+
+.chart-state p {
+  max-width: 360px;
+  margin-bottom: 0;
+  color: #dce8fb;
+}
+
+.chart-state.loading .chart-state-icon {
+  color: #b7d4ff;
+  animation: chartPulse 1.2s ease-in-out infinite;
+}
+
+.chart-state.error {
+  background: rgba(255, 123, 135, 0.08);
+  border-color: rgba(255, 123, 135, 0.28);
+}
+
+.chart-state.error .chart-state-icon {
+  color: #ffb8c0;
+}
+
+.chart-state-icon {
+  font-size: 2rem;
+  font-weight: 700;
+}
+
+@keyframes chartPulse {
+  0%,
+  100% {
+    opacity: 0.5;
+    transform: scale(0.96);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.08);
+  }
 }
 
 @media (max-width: 1280px) {
@@ -718,5 +926,12 @@ tbody td {
   .bars,
   .trend {
     gap: 4px;
+  }
+
+  .modal-panel {
+    width: calc(100vw - 20px);
+    max-height: calc(100vh - 20px);
+    padding: 18px;
+    border-radius: 22px;
   }
 }

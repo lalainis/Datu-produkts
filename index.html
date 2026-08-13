@@ -152,7 +152,15 @@
                 <p>Vidējais stundu profils atlasītajam objektam.</p>
               </div>
             </div>
-            <div id="consumptionChart" class="chart-card"></div>
+            <div
+              id="consumptionChart"
+              class="chart-card chart-popup-trigger"
+              data-chart-title="Tipiskais stundas patēriņš"
+              data-chart-description="Palielināts skats vēsturiskajam stundas patēriņa profilam."
+              tabindex="0"
+              role="button"
+              aria-label="Atvērt tipiskā stundas patēriņa grafiku"
+            ></div>
           </section>
 
           <section class="panel">
@@ -162,7 +170,15 @@
                 <p>Backend agregētas stundas cenas no jaunākās tirgus dienas.</p>
               </div>
             </div>
-            <div id="priceChart" class="chart-card"></div>
+            <div
+              id="priceChart"
+              class="chart-card chart-popup-trigger"
+              data-chart-title="Rītdienas biržas cenas"
+              data-chart-description="Palielināts skats backend agregētajām rītdienas stundas cenām."
+              tabindex="0"
+              role="button"
+              aria-label="Atvērt rītdienas biržas cenu grafiku"
+            ></div>
           </section>
         </section>
 
@@ -196,7 +212,15 @@
                 <p>Dienas patēriņa un izmaksu dinamika atlasītajam objektam.</p>
               </div>
             </div>
-            <div id="dailyTrendChart" class="chart-card"></div>
+            <div
+              id="dailyTrendChart"
+              class="chart-card chart-popup-trigger"
+              data-chart-title="Pēdējo 30 dienu tendence"
+              data-chart-description="Palielināts skats pēdējo 30 dienu patēriņa un izmaksu tendencei."
+              tabindex="0"
+              role="button"
+              aria-label="Atvērt pēdējo 30 dienu tendences grafiku"
+            ></div>
           </section>
 
           <section class="panel">
@@ -223,6 +247,24 @@
         </section>
       </section>
     </main>
+  </div>
+
+  <div id="chartModal" class="modal-overlay" hidden>
+    <div class="modal-backdrop" data-close-modal="true"></div>
+    <section class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="chartModalTitle">
+      <div class="modal-head">
+        <button id="prevChartModalButton" class="modal-nav-button" type="button" aria-label="Iepriekšējais grafiks">←</button>
+        <div>
+          <h2 id="chartModalTitle">Grafiks</h2>
+          <p id="chartModalDescription"></p>
+        </div>
+        <div class="modal-actions">
+          <button id="nextChartModalButton" class="modal-nav-button" type="button" aria-label="Nākamais grafiks">→</button>
+          <button id="closeChartModalButton" class="modal-close-button" type="button" aria-label="Aizvērt grafiku">×</button>
+        </div>
+      </div>
+      <div id="chartModalContent" class="modal-chart-content"></div>
+    </section>
   </div>
 
   <script src="app.js" defer></script>
