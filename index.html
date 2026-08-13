@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="lv">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Enerģijas patēriņa optimizācijas panelis</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="app-shell">
+    <header class="hero">
+      <div class="hero-copy">
+        <div class="hero-badge-row">
+          <span class="eyebrow">Backend + analytics dashboard</span>
+          <span class="hero-status" id="heroStatus">Ielādē datus...</span>
+        </div>
+        <h1>Enerģijas patēriņa optimizācijas panelis</h1>
+        <p>
+          Web aplikācija apvieno vēsturisko patēriņu, Nord Pool cenas un scenāriju parametrus,
+          lai servera pusē aprēķinātu ietaupījuma potenciālu, slodzes rezervi un brīdinājumus.
+        </p>
+        <div class="hero-meta" id="heroMeta"></div>
+      </div>
+
+      <div class="hero-panel">
+        <div class="hero-panel-head">
+          <strong>Portfeļa kopsavilkums</strong>
+          <small id="generatedAt"></small>
+        </div>
+        <div class="hero-global-grid" id="globalCards"></div>
+      </div>
+    </header>
+
+    <main class="dashboard-grid">
+      <aside class="sidebar">
+        <section class="panel control-panel">
+          <div class="panel-title-row">
+            <div>
+              <h2>Scenārija iestatījumi</h2>
+              <p>Frontend izmanto backend API pārrēķinam pēc katras izmaiņas.</p>
+            </div>
+          </div>
+
+          <label class="field">
+            <span>Objekts</span>
+            <select id="objectSelect"></select>
+          </label>
+
+          <div class="field-grid">
+            <label class="field">
+              <span>Telpu platība, m²</span>
+              <input id="areaInput" type="number" min="0" step="1" placeholder="450">
+            </label>
+
+            <label class="field">
+              <span>Iekārtu skaits</span>
+              <input id="equipmentCountInput" type="number" min="0" step="1" placeholder="18">
+            </label>
+          </div>
+
+          <label class="field">
+            <span>Vidējā iekārtas jauda, W</span>
+            <input id="equipmentPowerInput" type="number" min="0" step="50" placeholder="1200">
+          </label>
+
+          <div class="action-row">
+            <button id="refreshButton" class="primary-button" type="button">Pārrēķināt scenāriju</button>
+            <button id="resetButton" class="secondary-button" type="button">Notīrīt ievadi</button>
+          </div>
+
+          <div class="scenario-box">
+            <strong id="scenarioTitle">Scenārija novērtējums</strong>
+            <p id="scenarioText"></p>
+          </div>
+        </section>
+
+        <section class="panel">
+          <div class="panel-title-row">
+            <div>
+              <h2>Objektu salīdzinājums</h2>
+              <p>Gada izmaksas un anomāliju apjoms pa objektiem.</p>
+            </div>
+          </div>
+
+          <div class="table-wrap compact-table">
+            <table>
+              <thead>
+                <tr>
+                  <th>Objekts</th>
+                  <th>Izmaksas</th>
+                  <th>Anom.</th>
+                </tr>
+              </thead>
+              <tbody id="portfolioBody"></tbody>
+            </table>
+          </div>
+        </section>
+      </aside>
+
+      <section class="content">
+        <section class="panel spotlight-panel">
+          <div class="panel-title-row">
+            <div>
+              <h2 id="objectHeading">Objekta analītika</h2>
+              <p id="objectSubheading">Balstīta uz servera aprēķinātu skatu modeli.</p>
+            </div>
+          </div>
+
+          <div class="chip-row" id="statusChips"></div>
+
+          <div class="signal-grid">
+            <article class="signal-card">
+              <span class="signal-label">Lētākās stundas</span>
+              <div id="cheapHours" class="signal-list"></div>
+            </article>
+            <article class="signal-card danger">
+              <span class="signal-label">Dārgākās stundas</span>
+              <div id="expensiveHours" class="signal-list"></div>
+            </article>
+            <article class="signal-card neutral">
+              <span class="signal-label">Objekta benchmarks</span>
+              <div class="benchmark-grid" id="benchmarkCards"></div>
+            </article>
+          </div>
+        </section>
+
+        <section class="panel">
+          <div class="panel-title-row">
+            <div>
+              <h2>KPI kopsavilkums</h2>
+              <p>Galvenie rādītāji un ietaupījuma potenciāls atlasītajam objektam.</p>
+            </div>
+          </div>
+          <div class="card-grid" id="summaryCards"></div>
+        </section>
+
+        <section class="panel">
+          <div class="panel-title-row">
+            <div>
+              <h2>Ieteicamās darbības</h2>
+              <p>Servera pusē ģenerēti ieteikumi izmaksu, slodzes un riska samazināšanai.</p>
+            </div>
+          </div>
+          <div class="recommendations" id="recommendations"></div>
+        </section>
+
+        <section class="split-layout">
+          <section class="panel">
+            <div class="panel-title-row">
+              <div>
+                <h2>Tipiskais stundas patēriņš</h2>
+                <p>Vidējais stundu profils atlasītajam objektam.</p>
+              </div>
+            </div>
+            <div id="consumptionChart" class="chart-card"></div>
+          </section>
+
+          <section class="panel">
+            <div class="panel-title-row">
+              <div>
+                <h2>Rītdienas biržas cenas</h2>
+                <p>Backend agregētas stundas cenas no jaunākās tirgus dienas.</p>
+              </div>
+            </div>
+            <div id="priceChart" class="chart-card"></div>
+          </section>
+        </section>
+
+        <section class="panel">
+          <div class="panel-title-row">
+            <div>
+              <h2>Patēriņa plānošana pa stundām</h2>
+              <p>Stundu saraksts ar darbības ieteikumu katrai rītdienas stundai.</p>
+            </div>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Stunda</th>
+                  <th>Tipiskais patēriņš</th>
+                  <th>Biržas cena</th>
+                  <th>Darbība</th>
+                </tr>
+              </thead>
+              <tbody id="planTableBody"></tbody>
+            </table>
+          </div>
+        </section>
+
+        <section class="split-layout">
+          <section class="panel">
+            <div class="panel-title-row">
+              <div>
+                <h2>Pēdējo 30 dienu tendence</h2>
+                <p>Dienas patēriņa un izmaksu dinamika atlasītajam objektam.</p>
+              </div>
+            </div>
+            <div id="dailyTrendChart" class="chart-card"></div>
+          </section>
+
+          <section class="panel">
+            <div class="panel-title-row">
+              <div>
+                <h2>Anomāliju žurnāls</h2>
+                <p>Stundas, kuras pārsniedza tipisko slodzi vai pietuvojās limitam.</p>
+              </div>
+            </div>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Datums</th>
+                    <th>Stunda</th>
+                    <th>Patēriņš</th>
+                    <th>Iemesls</th>
+                  </tr>
+                </thead>
+                <tbody id="alertsTableBody"></tbody>
+              </table>
+            </div>
+          </section>
+        </section>
+      </section>
+    </main>
+  </div>
+
+  <script src="app.js" defer></script>
+</body>
+</html>
