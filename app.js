@@ -33,13 +33,6 @@ const refs = {
   planTableBody: document.getElementById("planTableBody"),
   dailyTrendChart: document.getElementById("dailyTrendChart"),
   alertsTableBody: document.getElementById("alertsTableBody"),
-  chartModal: document.getElementById("chartModal"),
-  chartModalTitle: document.getElementById("chartModalTitle"),
-  chartModalDescription: document.getElementById("chartModalDescription"),
-  chartModalContent: document.getElementById("chartModalContent"),
-  prevChartModalButton: document.getElementById("prevChartModalButton"),
-  nextChartModalButton: document.getElementById("nextChartModalButton"),
-  closeChartModalButton: document.getElementById("closeChartModalButton"),
 };
 
 const numberFormat = new Intl.NumberFormat("lv-LV", {
@@ -60,7 +53,6 @@ initialise().catch((error) => {
 });
 
 async function initialise() {
-  closeChartModal();
   setLoadingState(true, "Ielādē backend kopsavilkumu...");
   renderChartLoadingState();
   state.bootstrap = await fetchJson("/api/bootstrap");
@@ -69,7 +61,6 @@ async function initialise() {
   renderGlobalSummary(state.bootstrap);
   renderPortfolio(state.bootstrap.portfolio);
   wireEvents();
-  wireChartPopups();
   await refreshDashboard("Aprēķina objekta analītiku...");
 }
 
@@ -98,48 +89,6 @@ function wireEvents() {
     refs.equipmentCountInput.value = "";
     refs.equipmentPowerInput.value = "";
     refreshDashboard("Atjauno sākotnējo scenāriju...");
-  });
-}
-
-function wireChartPopups() {
-  document.querySelectorAll(".chart-popup-trigger").forEach((element) => {
-    element.addEventListener("click", () => {
-      openChartModal(element.id);
-    });
-    element.addEventListener("keydown", (event) => {
-      if (event.key === "Enter" || event.key === " ") {
-        event.preventDefault();
-        openChartModal(element.id);
-      }
-    });
-  });
-
-  refs.prevChartModalButton.addEventListener("click", () => {
-    stepChartModal(-1);
-  });
-  refs.nextChartModalButton.addEventListener("click", () => {
-    stepChartModal(1);
-  });
-  refs.closeChartModalButton.addEventListener("click", closeChartModal);
-  refs.chartModal.addEventListener("click", (event) => {
-    if (event.target instanceof HTMLElement && event.target.dataset.closeModal === "true") {
-      closeChartModal();
-    }
-  });
-
-  document.addEventListener("keydown", (event) => {
-    if (refs.chartModal.hidden) {
-      return;
-    }
-    if (event.key === "Escape") {
-      closeChartModal();
-    } else if (event.key === "ArrowLeft") {
-      event.preventDefault();
-      stepChartModal(-1);
-    } else if (event.key === "ArrowRight") {
-      event.preventDefault();
-      stepChartModal(1);
-    }
   });
 }
 
@@ -267,7 +216,6 @@ function renderDashboard(dashboard) {
   renderPlanTable(dashboard.planRows);
   renderDailyTrend(dashboard.charts.dailyTrend);
   renderAlerts(dashboard.alerts);
-  syncOpenChartModal();
 }
 
 function renderStatusChips(chips) {
@@ -461,61 +409,6 @@ function renderSingleChartState(container, tone, message) {
       <p>${escapeHtml(message)}</p>
     </div>
   `;
-}
-
-function openChartModal(chartId) {
-  if (!chartId || typeof chartId !== "string") {
-    return;
-  }
-
-  const source = document.getElementById(chartId);
-  if (!source || !source.classList.contains("chart-popup-trigger")) {
-    return;
-  }
-
-  state.activeModalChartId = chartId;
-  refs.chartModalTitle.textContent = source.dataset.chartTitle || "Grafiks";
-  refs.chartModalDescription.textContent = source.dataset.chartDescription || "";
-  refs.chartModalContent.innerHTML = source.innerHTML;
-  syncModalNavigationButtons();
-  refs.chartModal.hidden = false;
-  document.body.classList.add("modal-open");
-  refs.closeChartModalButton.focus();
-}
-
-function closeChartModal() {
-  state.activeModalChartId = null;
-  refs.chartModal.hidden = true;
-  refs.chartModalContent.innerHTML = "";
-  document.body.classList.remove("modal-open");
-}
-
-function syncOpenChartModal() {
-  if (!state.activeModalChartId || refs.chartModal.hidden) {
-    return;
-  }
-  openChartModal(state.activeModalChartId);
-}
-
-function getChartTriggerIds() {
-  return Array.from(document.querySelectorAll(".chart-popup-trigger")).map((element) => element.id);
-}
-
-function stepChartModal(step) {
-  const chartIds = getChartTriggerIds();
-  const currentIndex = chartIds.indexOf(state.activeModalChartId);
-  if (currentIndex === -1 || chartIds.length < 2) {
-    return;
-  }
-  const nextIndex = (currentIndex + step + chartIds.length) % chartIds.length;
-  openChartModal(chartIds[nextIndex]);
-}
-
-function syncModalNavigationButtons() {
-  const chartIds = getChartTriggerIds();
-  const hasMultipleCharts = chartIds.length > 1;
-  refs.prevChartModalButton.disabled = !hasMultipleCharts;
-  refs.nextChartModalButton.disabled = !hasMultipleCharts;
 }
 
 function setLoadingState(isLoading, message) {
