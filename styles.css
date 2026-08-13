@@ -583,6 +583,68 @@ thead th {
   gap: 24px;
 }
 
+.plan-chart-card {
+  margin: 0 0 18px;
+  padding: 18px 12px 10px;
+  border-radius: var(--radius-lg);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.5), rgba(223, 237, 255, 0.58));
+  border: 1px solid rgba(21, 51, 90, 0.1);
+}
+
+.plan-chart-grid {
+  display: grid;
+  grid-template-columns: repeat(24, minmax(0, 1fr));
+  align-items: end;
+  gap: 8px;
+  min-height: 180px;
+}
+
+.plan-hour {
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+  min-height: 165px;
+}
+
+.plan-value,
+.plan-label {
+  text-align: center;
+  font-weight: 700;
+}
+
+.plan-value {
+  font-size: 0.64rem;
+  color: #123d68;
+}
+
+.plan-label {
+  font-size: 0.7rem;
+  color: #1d4f83;
+}
+
+.plan-bar {
+  width: 100%;
+  min-height: 18px;
+  border-radius: 10px 10px 6px 6px;
+  box-shadow: 0 8px 18px rgba(31, 72, 160, 0.16);
+}
+
+.plan-bar.success {
+  background: linear-gradient(180deg, #93edd0 0%, #1aa97a 100%);
+}
+
+.plan-bar.warning {
+  background: linear-gradient(180deg, #f7d78a 0%, #d89a2d 100%);
+}
+
+.plan-bar.danger {
+  background: linear-gradient(180deg, #ffbac2 0%, #d74d63 100%);
+}
+
+.plan-bar.neutral {
+  background: linear-gradient(180deg, #8dbbf9 0%, #3a7df1 100%);
+}
+
 .chart-card {
   min-height: 320px;
   position: relative;
@@ -590,14 +652,15 @@ thead th {
   transition: transform 0.18s ease, box-shadow 0.18s ease, background 0.18s ease, min-height 0.2s ease;
   padding-top: 20px;
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.02)),
+    linear-gradient(180deg, rgba(228, 239, 255, 0.75), rgba(244, 249, 255, 0.86)),
     repeating-linear-gradient(
       to top,
-      rgba(255, 255, 255, 0.035) 0,
-      rgba(255, 255, 255, 0.035) 1px,
+      rgba(21, 51, 90, 0.08) 0,
+      rgba(21, 51, 90, 0.08) 1px,
       transparent 1px,
       transparent 56px
     );
+  border: 1px solid rgba(21, 51, 90, 0.12);
 }
 
 .chart-card::after {
@@ -607,8 +670,8 @@ thead th {
   right: 0;
   padding: 8px 10px;
   border-radius: 0 0 0 12px;
-  background: rgba(255, 255, 255, 0.07);
-  color: #dce8fb;
+  background: rgba(21, 51, 90, 0.1);
+  color: #123860;
   font-size: 0.76rem;
   letter-spacing: 0.03em;
   z-index: 2;
@@ -668,41 +731,42 @@ thead th {
 
 .bar-value {
   font-size: 0.72rem;
-  color: #f2f7ff;
-  font-weight: 700;
-  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.28);
+  color: #0f2744;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  text-shadow: none;
 }
 
 .bar-caption {
   font-size: 0.76rem;
-  color: #edf4ff;
-  font-weight: 600;
+  color: #163d69;
+  font-weight: 800;
 }
 
 .bar {
   border-radius: 14px 14px 8px 8px;
   min-height: 16px;
-  background: linear-gradient(180deg, #9fd1ff 0%, #4f94ff 100%);
-  box-shadow: 0 10px 20px rgba(79, 148, 255, 0.24);
+  background: linear-gradient(180deg, #6aa8ff 0%, #2f6fe9 100%);
+  box-shadow: 0 10px 20px rgba(22, 58, 130, 0.22);
 }
 
 .bar.success {
-  background: linear-gradient(180deg, #9affd9 0%, #34d19f 100%);
-  box-shadow: 0 10px 20px rgba(52, 209, 159, 0.22);
+  background: linear-gradient(180deg, #8fe7c0 0%, #1fa977 100%);
+  box-shadow: 0 10px 20px rgba(31, 169, 119, 0.2);
 }
 
 .bar.warning {
-  background: linear-gradient(180deg, #ffe9ae 0%, #f0b54a 100%);
-  box-shadow: 0 10px 20px rgba(240, 181, 74, 0.22);
+  background: linear-gradient(180deg, #f6d58a 0%, #d79d26 100%);
+  box-shadow: 0 10px 20px rgba(215, 157, 38, 0.2);
 }
 
 .bar.danger {
-  background: linear-gradient(180deg, #ffbec5 0%, #ff6777 100%);
-  box-shadow: 0 10px 20px rgba(255, 103, 119, 0.22);
+  background: linear-gradient(180deg, #ffb2be 0%, #d94e61 100%);
+  box-shadow: 0 10px 20px rgba(217, 78, 97, 0.2);
 }
 
 .bar.neutral {
-  background: linear-gradient(180deg, #9fd1ff 0%, #4f94ff 100%);
+  background: linear-gradient(180deg, #87b9ff 0%, #3c82ff 100%);
 }
 
 .table-wrap {
@@ -768,18 +832,19 @@ tbody td {
 }
 
 .trend-consumption {
-  background: linear-gradient(180deg, #a3d4ff 0%, #4e93ff 100%);
+  background: linear-gradient(180deg, #8ab9ff 0%, #2f6fe9 100%);
 }
 
 .trend-cost {
-  background: linear-gradient(180deg, #9affd8 0%, #30cf9a 100%);
+  background: linear-gradient(180deg, #8ae1c3 0%, #1aa97a 100%);
 }
 
 .trend-label,
 .mini-legend {
   font-size: 0.74rem;
-  color: #edf4ff;
-  font-weight: 600;
+  color: #173d67;
+  font-weight: 800;
+  letter-spacing: 0.02em;
 }
 
 .legend-consumption,
@@ -819,7 +884,8 @@ tbody td {
 .chart-state p {
   max-width: 360px;
   margin-bottom: 0;
-  color: #dce8fb;
+  color: #1b406a;
+  font-weight: 600;
 }
 
 .chart-state.loading .chart-state-icon {

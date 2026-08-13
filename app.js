@@ -32,6 +32,7 @@ const refs = {
   recommendations: document.getElementById("recommendations"),
   consumptionChart: document.getElementById("consumptionChart"),
   priceChart: document.getElementById("priceChart"),
+  planChart: document.getElementById("planChart"),
   planTableBody: document.getElementById("planTableBody"),
   dailyTrendChart: document.getElementById("dailyTrendChart"),
   alertsTableBody: document.getElementById("alertsTableBody"),
@@ -311,6 +312,7 @@ function renderDashboard(dashboard) {
   renderRecommendations(dashboard.recommendations);
   renderHourlyChart(refs.consumptionChart, dashboard.charts.consumptionHourly, "consumption", dashboard.priceSignals);
   renderHourlyChart(refs.priceChart, dashboard.charts.priceHourly, "price", dashboard.priceSignals);
+  renderPlanChart(dashboard.planRows);
   renderPlanTable(dashboard.planRows);
   renderDailyTrend(dashboard.charts.dailyTrend);
   renderAlerts(dashboard.alerts);
@@ -418,6 +420,49 @@ function renderHourlyChart(container, items, mode, signals) {
           `;
         })
         .join("")}
+    </div>
+  `;
+}
+
+function renderPlanChart(rows) {
+  if (!Array.isArray(rows) || rows.length === 0) {
+    refs.planChart.innerHTML = `
+      <div class="chart-state error">
+        <div class="chart-state-icon">!</div>
+        <strong>Grafiks nav pieejams</strong>
+        <p>Patēriņa plānošana pa stundām šobrīd nav pieejama.</p>
+      </div>
+    `;
+    return;
+  }
+
+  const maxConsumption = Math.max(...rows.map((row) => row.consumption), 1);
+  const toneClass = {
+    success: "success",
+    danger: "danger",
+    warning: "warning",
+    neutral: "neutral",
+  };
+
+  refs.planChart.innerHTML = `
+    <div class="plan-chart-grid">
+      ${rows
+        .map((row) => {
+          const height = Math.max(18, Math.round((row.consumption / maxConsumption) * 110));
+          const tone = toneClass[row.tone] || "neutral";
+          return `
+            <div class="plan-hour" title="${escapeHtml(row.hour)} — ${escapeHtml(row.action)} (${escapeHtml(numberFormat.format(row.consumption))} kWh / ${escapeHtml(numberFormat.format(row.price))} €/MWh)">
+              <span class="plan-value">${escapeHtml(numberFormat.format(row.consumption))}</span>
+              <span class="plan-bar ${tone}" style="height:${height}px"></span>
+              <span class="plan-label">${escapeHtml(row.hour.slice(0, 2))}</span>
+            </div>
+          `;
+        })
+        .join("")}
+    </div>
+    <div class="mini-legend">
+      <span><i class="legend-consumption"></i>Patēriņš</span>
+      <span><i class="legend-cost"></i>Darbības ieteikums</span>
     </div>
   `;
 }
