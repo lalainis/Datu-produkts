@@ -2,6 +2,7 @@ const state = {
   bootstrap: null,
   dashboard: null,
   selectedObjectId: null,
+  selectedPortfolioIds: new Set(),
   requestToken: 0,
   activeModalChartId: null,
 };
@@ -20,6 +21,7 @@ const refs = {
   scenarioTitle: document.getElementById("scenarioTitle"),
   scenarioText: document.getElementById("scenarioText"),
   portfolioBody: document.getElementById("portfolioBody"),
+  compareButton: document.getElementById("compareButton"),
   objectHeading: document.getElementById("objectHeading"),
   objectSubheading: document.getElementById("objectSubheading"),
   statusChips: document.getElementById("statusChips"),
@@ -57,6 +59,7 @@ async function initialise() {
   renderChartLoadingState();
   state.bootstrap = await fetchJson("/api/bootstrap");
   state.selectedObjectId = state.bootstrap.defaultObjectId;
+  state.selectedPortfolioIds = new Set(state.selectedObjectId ? [state.selectedObjectId] : []);
   populateObjectSelect(state.bootstrap.objects, state.selectedObjectId);
   renderGlobalSummary(state.bootstrap);
   renderPortfolio(state.bootstrap.portfolio);
@@ -67,8 +70,65 @@ async function initialise() {
 function wireEvents() {
   refs.objectSelect.addEventListener("change", () => {
     state.selectedObjectId = refs.objectSelect.value;
+    state.selectedPortfolioIds.add(state.selectedObjectId);
     renderPortfolio(state.bootstrap.portfolio);
     refreshDashboard("Atjauno objekta skatu...");
+  });
+
+  refs.portfolioBody.addEventListener("change", (event) => {
+    const input = event.target;
+    if (!(input instanceof HTMLInputElement) || input.type !== "checkbox") {
+      return;
+    }
+
+    const objectId = input.dataset.objectId;
+    if (!objectId) {
+      return;
+    }
+
+    if (input.checked) {
+      state.selectedPortfolioIds.add(objectId);
+    } else {
+      state.selectedPortfolioIds.delete(objectId);
+      if (state.selectedObjectId === objectId) {
+        const nextSelection = Array.from(state.selectedPortfolioIds)[0] || objectId;
+        state.selectedObjectId = nextSelection;
+        refs.objectSelect.value = nextSelection;
+      }
+    }
+
+    renderPortfolio(state.bootstrap.portfolio);
+  });
+
+  refs.portfolioBody.addEventListener("click", (event) => {
+    const checkbox = event.target.closest("input[type='checkbox']");
+    if (checkbox) {
+      return;
+    }
+
+    const row = event.target.closest("tr[data-object-id]");
+    if (!row) {
+      return;
+    }
+
+    const objectId = row.dataset.objectId;
+    state.selectedObjectId = objectId;
+    state.selectedPortfolioIds.add(objectId);
+    refs.objectSelect.value = objectId;
+    renderPortfolio(state.bootstrap.portfolio);
+    refreshDashboard("Atjauno atlasītā objekta skatu...");
+  });
+
+  refs.compareButton.addEventListener("click", () => {
+    if (state.selectedPortfolioIds.size === 0) {
+      return;
+    }
+
+    const nextObjectId = Array.from(state.selectedPortfolioIds)[0];
+    state.selectedObjectId = nextObjectId;
+    refs.objectSelect.value = nextObjectId;
+    renderPortfolio(state.bootstrap.portfolio);
+    refreshDashboard("Atjauno atlasīto objektu scenāriju...");
   });
 
   [refs.areaInput, refs.equipmentCountInput, refs.equipmentPowerInput].forEach((input) => {
@@ -212,11 +272,17 @@ function renderPortfolio(portfolio) {
   refs.portfolioBody.innerHTML = portfolio
     .map((item) => {
       const active = item.id === state.selectedObjectId ? "is-active" : "";
+      const selected = state.selectedPortfolioIds.has(item.id) ? "checked" : "";
       return `
-        <tr class="${active}">
-          <td>
-            <strong>${escapeHtml(item.name)}</strong>
-            <small>${escapeHtml(item.id)}</small>
+        <tr class="${active}" data-object-id="${escapeHtml(item.id)}">
+          <td class="select-cell">
+            <label class="checkbox-label">
+              <input type="checkbox" data-object-id="${escapeHtml(item.id)}" ${selected} />
+              <span>
+                <strong>${escapeHtml(item.name)}</strong>
+                <small>${escapeHtml(item.id)}</small>
+              </span>
+            </label>
           </td>
           <td>${escapeHtml(integerFormat.format(item.annualCost))} EUR</td>
           <td>${escapeHtml(integerFormat.format(item.anomalyCount))}</td>

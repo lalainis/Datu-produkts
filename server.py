@@ -21,6 +21,11 @@ def script():
     return send_from_directory(BASE_DIR, "app.js")
 
 
+@app.get("/logo.png")
+def logo():
+    return send_from_directory(BASE_DIR, "Elektrum_Business_Logo_RGB_White.png")
+
+
 @app.get("/api/health")
 def health():
     dataset = load_dataset()
