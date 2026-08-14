@@ -47,6 +47,8 @@ const integerFormat = new Intl.NumberFormat("lv-LV", {
   maximumFractionDigits: 0,
 });
 
+const inputStorageKey = "energy-dashboard-object-inputs-v1";
+
 let inputTimer = null;
 
 initialise().catch((error) => {
@@ -65,15 +67,18 @@ async function initialise() {
   populateObjectSelect(state.bootstrap.objects, state.selectedObjectId);
   renderGlobalSummary(state.bootstrap);
   renderPortfolio(state.bootstrap.portfolio);
+  restoreSavedInputs(state.selectedObjectId);
   wireEvents();
   await refreshDashboard("Aprēķina objekta analītiku...");
 }
 
 function wireEvents() {
   refs.objectSelect.addEventListener("change", () => {
+    saveCurrentInputs(state.selectedObjectId);
     state.selectedObjectId = refs.objectSelect.value;
     state.selectedPortfolioIds.add(state.selectedObjectId);
     renderPortfolio(state.bootstrap.portfolio);
+    restoreSavedInputs(state.selectedObjectId);
     refreshDashboard("Atjauno objekta skatu...");
   });
 
@@ -114,10 +119,12 @@ function wireEvents() {
     }
 
     const objectId = row.dataset.objectId;
+    saveCurrentInputs(state.selectedObjectId);
     state.selectedObjectId = objectId;
     state.selectedPortfolioIds.add(objectId);
     refs.objectSelect.value = objectId;
     renderPortfolio(state.bootstrap.portfolio);
+    restoreSavedInputs(objectId);
     refreshDashboard("Atjauno atlasītā objekta skatu...");
   });
 
@@ -126,15 +133,18 @@ function wireEvents() {
       return;
     }
 
+    saveCurrentInputs(state.selectedObjectId);
     const nextObjectId = Array.from(state.selectedPortfolioIds)[0];
     state.selectedObjectId = nextObjectId;
     refs.objectSelect.value = nextObjectId;
     renderPortfolio(state.bootstrap.portfolio);
+    restoreSavedInputs(nextObjectId);
     refreshDashboard("Atjauno atlasīto objektu scenāriju...");
   });
 
   [refs.areaInput, refs.equipmentCountInput, refs.equipmentPowerInput].forEach((input) => {
     input.addEventListener("input", () => {
+      saveCurrentInputs(state.selectedObjectId);
       window.clearTimeout(inputTimer);
       inputTimer = window.setTimeout(() => {
         refreshDashboard("Pārrēķina scenāriju...");
@@ -150,6 +160,7 @@ function wireEvents() {
     refs.areaInput.value = "";
     refs.equipmentCountInput.value = "";
     refs.equipmentPowerInput.value = "";
+    clearSavedInputs(state.selectedObjectId);
     refreshDashboard("Atjauno sākotnējo scenāriju...");
   });
 
@@ -208,6 +219,7 @@ async function refreshDashboard(message) {
     }
 
     state.dashboard = dashboard;
+    saveCurrentInputs(state.selectedObjectId);
     renderDashboard(dashboard);
     setLoadingState(false, "Backend dati ir aktuāli.");
   } catch (error) {
@@ -229,6 +241,68 @@ function populateObjectSelect(objects, selectedObjectId) {
     .map((item) => `<option value="${escapeHtml(item.id)}">${escapeHtml(item.name)} (${escapeHtml(item.id)})</option>`)
     .join("");
   refs.objectSelect.value = selectedObjectId;
+}
+
+function getStoredInputs() {
+  const raw = window.localStorage.getItem(inputStorageKey);
+  if (!raw) {
+    return {};
+  }
+
+  try {
+    const parsed = JSON.parse(raw);
+    return parsed && typeof parsed === "object" ? parsed : {};
+  } catch (_error) {
+    return {};
+  }
+}
+
+function setStoredInputs(data) {
+  window.localStorage.setItem(inputStorageKey, JSON.stringify(data));
+}
+
+function readCurrentInputs() {
+  return {
+    area: refs.areaInput.value,
+    equipmentCount: refs.equipmentCountInput.value,
+    equipmentPowerWatts: refs.equipmentPowerInput.value,
+  };
+}
+
+function applyInputs(inputs) {
+  refs.areaInput.value = inputs && Object.prototype.hasOwnProperty.call(inputs, "area") ? inputs.area : "";
+  refs.equipmentCountInput.value = inputs && Object.prototype.hasOwnProperty.call(inputs, "equipmentCount") ? inputs.equipmentCount : "";
+  refs.equipmentPowerInput.value = inputs && Object.prototype.hasOwnProperty.call(inputs, "equipmentPowerWatts") ? inputs.equipmentPowerWatts : "";
+}
+
+function restoreSavedInputs(objectId) {
+  if (!objectId) {
+    applyInputs(null);
+    return;
+  }
+
+  const data = getStoredInputs();
+  applyInputs(data[objectId] || null);
+}
+
+function saveCurrentInputs(objectId) {
+  if (!objectId) {
+    return;
+  }
+
+  const data = getStoredInputs();
+  data[objectId] = readCurrentInputs();
+  setStoredInputs(data);
+}
+
+function clearSavedInputs(objectId) {
+  if (!objectId) {
+    return;
+  }
+
+  const data = getStoredInputs();
+  delete data[objectId];
+  setStoredInputs(data);
 }
 
 function renderGlobalSummary(bootstrap) {
@@ -478,32 +552,138 @@ function renderSpotComparisonChart(consumptionItems, priceItems) {
   const consumptionMap = new Map(consumptionItems.map((item) => [item.hour, item.consumption]));
   const maxConsumption = Math.max(...consumptionItems.map((item) => item.consumption), 1);
   const maxPrice = Math.max(...priceItems.map((item) => item.price), 1);
+  const points = priceItems.map((priceItem, index) => {
+    const hour = priceItem.hour;
+    const consumption = consumptionMap.get(hour) ?? 0;
+    const x = 36 + index * 46;
+    const consumptionY = 200 - Math.round((consumption / maxConsumption) * 150);
+    const priceY = 200 - Math.round((priceItem.price / maxPrice) * 150);
+    const anchorY = Math.round((consumptionY + priceY) / 2);
+    return {
+      hour,
+      consumption,
+      price: priceItem.price,
+      x,
+      consumptionY,
+      priceY,
+      anchorY,
+    };
+  });
+
+  const consumptionPath = points.map((point) => `${point.x},${point.consumptionY}`).join(" ");
+  const pricePath = points.map((point) => `${point.x},${point.priceY}`).join(" ");
 
   refs.spotComparisonChart.innerHTML = `
-    <div class="comparison-chart">
-      ${priceItems
-        .map((priceItem) => {
-          const hour = priceItem.hour;
-          const consumption = consumptionMap.get(hour) ?? 0;
-          const consumptionPercent = Math.max(8, Math.round((consumption / maxConsumption) * 100));
-          const pricePercent = Math.max(8, Math.round((priceItem.price / maxPrice) * 100));
-          return `
-            <div class="comparison-step" title="${escapeHtml(hour)} — ${escapeHtml(numberFormat.format(consumption))} kWh / ${escapeHtml(numberFormat.format(priceItem.price))} €/MWh">
-              <div class="comparison-bars">
-                <span class="comparison-bar comparison-consumption" style="height:${consumptionPercent}%"></span>
-                <span class="comparison-bar comparison-price" style="height:${pricePercent}%"></span>
-              </div>
-              <div class="comparison-label">${escapeHtml(hour.slice(0, 2))}</div>
-            </div>
-          `;
-        })
-        .join("")}
+    <div class="comparison-wrapper">
+      <svg class="comparison-svg" viewBox="0 0 1100 260" preserveAspectRatio="none" aria-hidden="true">
+        <g class="comparison-grid">
+          <line x1="20" y1="30" x2="1080" y2="30"></line>
+          <line x1="20" y1="70" x2="1080" y2="70"></line>
+          <line x1="20" y1="110" x2="1080" y2="110"></line>
+          <line x1="20" y1="150" x2="1080" y2="150"></line>
+          <line x1="20" y1="190" x2="1080" y2="190"></line>
+        </g>
+        <polyline class="comparison-line comparison-line-consumption" points="${consumptionPath}"></polyline>
+        <polyline class="comparison-line comparison-line-price" points="${pricePath}"></polyline>
+        ${points
+          .map(
+            (point) => `
+              <circle class="comparison-dot comparison-dot-consumption" cx="${point.x}" cy="${point.consumptionY}" r="5"></circle>
+              <circle class="comparison-dot comparison-dot-price" cx="${point.x}" cy="${point.priceY}" r="5"></circle>
+            `
+          )
+          .join("")}
+      </svg>
+      <div class="comparison-points">
+        ${points
+          .map(
+            (point) => `
+              <button
+                type="button"
+                class="comparison-point"
+                style="left:${(point.x / 1100) * 100}%; top:${(point.anchorY / 260) * 100}%"
+                data-hour="${escapeHtml(point.hour)}"
+                data-consumption="${escapeHtml(numberFormat.format(point.consumption))}"
+                data-price="${escapeHtml(numberFormat.format(point.price))}"
+                data-x="${point.x}"
+                data-y="${point.anchorY}"
+                aria-label="${escapeHtml(point.hour)}: patēriņš ${escapeHtml(numberFormat.format(point.consumption))} kWh, SPOT cena ${escapeHtml(numberFormat.format(point.price))} €/MWh"
+                title="${escapeHtml(point.hour)} — ${escapeHtml(numberFormat.format(point.consumption))} kWh / ${escapeHtml(numberFormat.format(point.price))} €/MWh"
+              ></button>
+            `
+          )
+          .join("")}
+      </div>
+      <div class="comparison-tooltip" aria-live="polite" hidden></div>
+      <div class="comparison-axis">
+        ${points
+          .map(
+            (point) => `<span>${escapeHtml(point.hour.slice(0, 2))}</span>`
+          )
+          .join("")}
+      </div>
     </div>
     <div class="mini-legend">
       <span><i class="legend-consumption"></i>Klienta patēriņš</span>
       <span><i class="legend-price"></i>SPOT cena</span>
     </div>
   `;
+
+  const wrapper = refs.spotComparisonChart.querySelector(".comparison-wrapper");
+  const tooltip = refs.spotComparisonChart.querySelector(".comparison-tooltip");
+  if (!wrapper || !tooltip) {
+    return;
+  }
+
+  const showTooltip = (target) => {
+    const hour = target.getAttribute("data-hour");
+    const consumption = target.getAttribute("data-consumption");
+    const price = target.getAttribute("data-price");
+    const x = Number(target.getAttribute("data-x"));
+    const y = Number(target.getAttribute("data-y"));
+    let left;
+    let transform;
+    if (x < 150) {
+      left = "12px";
+      transform = "translate(0, -100%)";
+    } else if (x > 950) {
+      left = "calc(100% - 12px)";
+      transform = "translate(-100%, -100%)";
+    } else {
+      left = `${(x / 1100) * 100}%`;
+      transform = "translate(-50%, -100%)";
+    }
+
+    tooltip.innerHTML = `
+      <strong>${escapeHtml(hour)}</strong>
+      <span>Patēriņš: ${escapeHtml(consumption)} kWh</span>
+      <span>SPOT cena: ${escapeHtml(price)} €/MWh</span>
+    `;
+    tooltip.hidden = false;
+    tooltip.style.left = left;
+    tooltip.style.top = `${Math.max(24, y - 18) / 260 * 100}%`;
+    tooltip.style.transform = transform;
+  };
+
+  wrapper.addEventListener("pointerover", (event) => {
+    const target = event.target.closest(".comparison-point");
+    if (!target) {
+      return;
+    }
+    showTooltip(target);
+  });
+
+  wrapper.addEventListener("pointermove", (event) => {
+    const target = event.target.closest(".comparison-point");
+    if (!target) {
+      return;
+    }
+    showTooltip(target);
+  });
+
+  wrapper.addEventListener("pointerleave", () => {
+    tooltip.hidden = true;
+  });
 }
 
 function renderPlanTable(rows) {
@@ -572,13 +752,13 @@ function renderAlerts(alerts) {
 }
 
 function renderChartLoadingState() {
-  [refs.consumptionChart, refs.priceChart, refs.dailyTrendChart].forEach((container) => {
+  [refs.consumptionChart, refs.priceChart, refs.spotComparisonChart, refs.dailyTrendChart].forEach((container) => {
     renderSingleChartState(container, "loading", "Grafiks tiek ielādēts...");
   });
 }
 
 function renderChartErrorState(message) {
-  [refs.consumptionChart, refs.priceChart, refs.dailyTrendChart].forEach((container) => {
+  [refs.consumptionChart, refs.priceChart, refs.spotComparisonChart, refs.dailyTrendChart].forEach((container) => {
     renderSingleChartState(container, "error", message);
   });
 }

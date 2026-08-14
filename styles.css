@@ -645,51 +645,124 @@ thead th {
   background: linear-gradient(180deg, #8dbbf9 0%, #3a7df1 100%);
 }
 
-.comparison-chart {
+.comparison-wrapper {
+  position: relative;
+  min-height: 300px;
+  padding: 14px 10px 4px;
+}
+
+.comparison-svg {
+  display: block;
+  width: 100%;
+  height: 260px;
+}
+
+.comparison-grid line {
+  stroke: rgba(21, 51, 90, 0.09);
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+}
+
+.comparison-line {
+  fill: none;
+  stroke-width: 3.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+}
+
+.comparison-line-consumption {
+  stroke: #2f6fe9;
+  filter: drop-shadow(0 8px 14px rgba(47, 111, 233, 0.14));
+}
+
+.comparison-line-price {
+  stroke: #17a680;
+  filter: drop-shadow(0 8px 14px rgba(23, 166, 128, 0.14));
+}
+
+.comparison-dot {
+  fill: #ffffff;
+  stroke-width: 3;
+  vector-effect: non-scaling-stroke;
+}
+
+.comparison-dot-consumption {
+  stroke: #2f6fe9;
+}
+
+.comparison-dot-price {
+  stroke: #17a680;
+}
+
+.comparison-points {
+  position: absolute;
+  inset: 14px 10px 44px;
+}
+
+.comparison-point {
+  position: absolute;
+  width: 18px;
+  height: 18px;
+  margin-left: -9px;
+  margin-top: -9px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  cursor: pointer;
+}
+
+.comparison-point:focus-visible {
+  outline: 2px solid rgba(47, 111, 233, 0.45);
+  outline-offset: 4px;
+}
+
+.comparison-point::after {
+  content: "";
+  position: absolute;
+  inset: 4px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.12);
+  box-shadow: 0 0 0 1px rgba(21, 51, 90, 0.08);
+}
+
+.comparison-tooltip {
+  position: absolute;
+  min-width: 180px;
+  max-width: 220px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.96);
+  border: 1px solid rgba(21, 51, 90, 0.16);
+  box-shadow: 0 18px 34px rgba(22, 58, 130, 0.16);
+  transform: translate(-50%, -100%);
+  pointer-events: none;
+  display: grid;
+  gap: 4px;
+  color: var(--text);
+}
+
+.comparison-tooltip strong {
+  font-size: 0.88rem;
+}
+
+.comparison-tooltip span {
+  font-size: 0.78rem;
+  color: var(--muted);
+}
+
+.comparison-axis {
   display: grid;
   grid-template-columns: repeat(24, minmax(0, 1fr));
-  align-items: end;
   gap: 8px;
-  min-height: 220px;
-  padding: 10px 6px 0;
-}
-
-.comparison-step {
-  display: grid;
-  justify-items: center;
-  gap: 8px;
-  min-height: 190px;
-}
-
-.comparison-bars {
-  display: flex;
-  align-items: end;
-  justify-content: center;
-  gap: 6px;
-  width: 100%;
-  min-height: 150px;
-}
-
-.comparison-bar {
-  display: block;
-  width: 10px;
-  min-height: 14px;
-  border-radius: 10px 10px 5px 5px;
-  box-shadow: 0 8px 18px rgba(31, 72, 160, 0.14);
-}
-
-.comparison-consumption {
-  background: linear-gradient(180deg, #8dbbf9 0%, #3b7ef3 100%);
-}
-
-.comparison-price {
-  background: linear-gradient(180deg, #8fe6c4 0%, #17a680 100%);
-}
-
-.comparison-label {
-  font-size: 0.68rem;
+  margin-top: 4px;
+  font-size: 0.72rem;
   font-weight: 800;
   color: #173d67;
+}
+
+.comparison-axis span {
+  text-align: center;
 }
 
 .legend-price {
