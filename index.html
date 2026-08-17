@@ -4,10 +4,38 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Enerģijas patēriņa optimizācijas panelis</title>
-  <link rel="stylesheet" href="styles.css?v=20260813-2">
+  <link rel="stylesheet" href="styles.css?v=20260817-4">
 </head>
 <body>
-  <div class="app-shell">
+  <div class="startup-dialog-backdrop" id="startupDialogBackdrop">
+    <section class="startup-dialog" id="startupDialog" role="dialog" aria-modal="true" aria-labelledby="startupDialogTitle">
+      <div class="startup-dialog-brand">
+        <div class="brand-lockup" aria-label="Elektrum zīmols">
+          <img src="/logo.png" alt="Elektrum logo" class="brand-logo" />
+        </div>
+        <span class="eyebrow">Datu importa izvēle</span>
+      </div>
+      <h2 id="startupDialogTitle">Izvēlies klienta datu failu</h2>
+      <p class="startup-dialog-text">
+        Pirms dashboard atvēršanas izvēlies, kuru Excel failu importēt analītikas aprēķinam.
+      </p>
+      <label class="field">
+        <span>Datu importa fails</span>
+        <select id="startupSourceSelect"></select>
+      </label>
+      <label class="field">
+        <span>Klienta tips</span>
+        <select id="startupClientTypeSelect"></select>
+      </label>
+      <label class="field">
+        <span>Objektam ir SES</span>
+        <select id="startupSolarSelect"></select>
+      </label>
+      <button id="startupImportButton" class="primary-button startup-button" type="button">Importēt un atvērt paneli</button>
+    </section>
+  </div>
+
+  <div class="app-shell is-locked" id="appShell">
     <header class="hero">
       <div class="hero-copy">
         <div class="hero-badge-row">
@@ -42,6 +70,31 @@
               <h2>Scenārija iestatījumi</h2>
               <p>Frontend izmanto backend API pārrēķinam pēc katras izmaiņas.</p>
             </div>
+          </div>
+
+          <label class="field">
+            <span>Datu importa fails</span>
+            <select id="sourceSelect"></select>
+          </label>
+
+          <label class="field">
+            <span>Klienta tips</span>
+            <select id="clientTypeSelect"></select>
+          </label>
+
+          <label class="field">
+            <span>Objektam ir SES</span>
+            <select id="solarSelect"></select>
+          </label>
+
+          <label class="field" id="solarCapacityField" hidden>
+            <span>SES jauda, kW</span>
+            <input id="solarCapacityInput" type="number" min="0" step="0.1" placeholder="50">
+            <small class="field-hint">Ievadi uzstādīto SES jaudu, lai ieteikumi ņemtu vērā iespējamo saules izstrādi dienas vidū.</small>
+          </label>
+
+          <div class="action-row source-action-row">
+            <button id="importSourceButton" class="primary-button" type="button">Importēt izvēlēto failu</button>
           </div>
 
           <label class="field">
@@ -140,6 +193,17 @@
           <div class="card-grid" id="summaryCards"></div>
         </section>
 
+        <section class="panel" id="solarSummarySection" hidden>
+          <div class="panel-title-row">
+            <div>
+              <h2>SES KPI bloks</h2>
+              <p>Eksports, pašpatēriņa potenciāls un ieteicamās SES stundas atlasītajam objektam.</p>
+            </div>
+          </div>
+          <div class="card-grid" id="solarSummaryCards"></div>
+          <div class="signal-list solar-hours-list" id="solarRecommendedHours"></div>
+        </section>
+
         <section class="panel">
           <div class="panel-title-row">
             <div>
@@ -180,6 +244,16 @@
             </div>
           </div>
           <div id="spotComparisonChart" class="chart-card" aria-label="SPOT profila un klienta patēriņa salīdzinājuma grafiks" tabindex="0" role="button"></div>
+        </section>
+
+        <section class="panel" id="solarComparisonSection" hidden>
+          <div class="panel-title-row">
+            <div>
+              <h2>SES vs patēriņš</h2>
+              <p id="solarComparisonDescription">Salīdzina objekta tipisko patēriņu ar SES eksporta profilu pa stundām.</p>
+            </div>
+          </div>
+          <div id="solarComparisonChart" class="chart-card" aria-label="SES un patēriņa salīdzinājuma grafiks" tabindex="0" role="button"></div>
         </section>
 
         <section class="panel">
@@ -242,6 +316,6 @@
     </main>
   </div>
 
-  <script src="app.js?v=20260813-2" defer></script>
+  <script src="app.js?v=20260817-4" defer></script>
 </body>
 </html>

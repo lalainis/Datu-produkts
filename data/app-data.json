@@ -1,5 +1,7 @@
 {
-  "generatedAt": "2026-08-17T08:34:59Z",
+  "generatedAt": "2026-08-17T09:19:15Z",
+  "sourceFile": "Tirdzniecibas_centrs_ar SES un EU.xlsx",
+  "sourceHasSolar": true,
   "marketPricePeriod": {
     "startDate": "2026-07-31",
     "endDate": "2026-08-13"
@@ -222,1645 +224,851 @@
   ],
   "objects": [
     {
-      "id": "43Z-STO018750153",
-      "name": "BIROJS",
+      "id": "Objekts 1",
+      "name": "Objekts 1",
       "hourlyProfile": [
         {
           "hour": "00:00",
-          "consumption": 42.65
+          "consumption": 339.35
         },
         {
           "hour": "01:00",
-          "consumption": 42.08
+          "consumption": 339.74
         },
         {
           "hour": "02:00",
-          "consumption": 42.16
+          "consumption": 340.85
         },
         {
           "hour": "03:00",
-          "consumption": 41.36
+          "consumption": 346.17
         },
         {
           "hour": "04:00",
-          "consumption": 41.24
+          "consumption": 354.36
         },
         {
           "hour": "05:00",
-          "consumption": 42.47
+          "consumption": 382.6
         },
         {
           "hour": "06:00",
-          "consumption": 44.12
+          "consumption": 446.33
         },
         {
           "hour": "07:00",
-          "consumption": 46.79
+          "consumption": 670.16
         },
         {
           "hour": "08:00",
-          "consumption": 54.7
+          "consumption": 1012.21
         },
         {
           "hour": "09:00",
-          "consumption": 59.9
+          "consumption": 1379.77
         },
         {
           "hour": "10:00",
-          "consumption": 59.48
+          "consumption": 1465.59
         },
         {
           "hour": "11:00",
-          "consumption": 60.09
+          "consumption": 1507.8
         },
         {
           "hour": "12:00",
-          "consumption": 60.49
+          "consumption": 1542.32
         },
         {
           "hour": "13:00",
-          "consumption": 61.17
+          "consumption": 1570.75
         },
         {
           "hour": "14:00",
-          "consumption": 60.78
+          "consumption": 1593.78
         },
         {
           "hour": "15:00",
-          "consumption": 60.62
+          "consumption": 1603.15
         },
         {
           "hour": "16:00",
-          "consumption": 58.78
+          "consumption": 1617.77
         },
         {
           "hour": "17:00",
-          "consumption": 56.56
+          "consumption": 1627.95
         },
         {
           "hour": "18:00",
-          "consumption": 54.53
+          "consumption": 1629.46
         },
         {
           "hour": "19:00",
-          "consumption": 51.62
+          "consumption": 1577.87
         },
         {
           "hour": "20:00",
-          "consumption": 47.99
+          "consumption": 980.18
         },
         {
           "hour": "21:00",
-          "consumption": 46.59
+          "consumption": 467.85
         },
         {
           "hour": "22:00",
-          "consumption": 45.48
+          "consumption": 397.37
         },
         {
           "hour": "23:00",
-          "consumption": 42.66
+          "consumption": 360.43
+        }
+      ],
+      "exportHourlyProfile": [
+        {
+          "hour": "11:00",
+          "export": 20.0
         }
       ],
       "last30Days": [
         {
-          "date": "2025-01-02",
-          "consumption": 2043.75,
-          "cost": 222.38
+          "date": "2026-07-02",
+          "consumption": 28773.68,
+          "cost": 1888.19
         },
         {
-          "date": "2025-01-03",
-          "consumption": 2583.0,
-          "cost": 226.72
+          "date": "2026-07-03",
+          "consumption": 26549.7,
+          "cost": 670.05
         },
         {
-          "date": "2025-01-04",
-          "consumption": 2252.25,
-          "cost": 217.49
+          "date": "2026-07-04",
+          "consumption": 25401.72,
+          "cost": 611.86
         },
         {
-          "date": "2025-01-05",
-          "consumption": 2151.75,
-          "cost": 202.02
+          "date": "2026-07-05",
+          "consumption": 25137.69,
+          "cost": 631.41
         },
         {
-          "date": "2025-01-06",
-          "consumption": 3069.75,
-          "cost": 263.08
+          "date": "2026-07-06",
+          "consumption": 24233.74,
+          "cost": 970.04
         },
         {
-          "date": "2025-01-07",
-          "consumption": 2354.25,
-          "cost": 184.8
+          "date": "2026-07-07",
+          "consumption": 24673.43,
+          "cost": 1889.5
         },
         {
-          "date": "2025-01-08",
-          "consumption": 2494.5,
-          "cost": 292.36
+          "date": "2026-07-08",
+          "consumption": 23197.43,
+          "cost": 902.76
         },
         {
-          "date": "2025-01-09",
-          "consumption": 2709.0,
-          "cost": 307.99
+          "date": "2026-07-09",
+          "consumption": 24465.48,
+          "cost": 2337.35
         },
         {
-          "date": "2025-01-10",
-          "consumption": 2352.75,
-          "cost": 244.0
+          "date": "2026-07-10",
+          "consumption": 26413.49,
+          "cost": 2462.1
         },
         {
-          "date": "2025-01-11",
-          "consumption": 2114.25,
-          "cost": 161.63
+          "date": "2026-07-11",
+          "consumption": 30680.75,
+          "cost": 2129.97
         },
         {
-          "date": "2025-01-12",
-          "consumption": 2195.25,
-          "cost": 191.13
+          "date": "2026-07-12",
+          "consumption": 31177.57,
+          "cost": 1536.92
         },
         {
-          "date": "2025-01-13",
-          "consumption": 2733.0,
-          "cost": 296.0
+          "date": "2026-07-13",
+          "consumption": 29361.45,
+          "cost": 2196.25
         },
         {
-          "date": "2025-01-14",
-          "consumption": 2310.75,
-          "cost": 147.24
+          "date": "2026-07-14",
+          "consumption": 30379.51,
+          "cost": 2677.07
         },
         {
-          "date": "2025-01-15",
-          "consumption": 2192.25,
-          "cost": 374.94
+          "date": "2026-07-15",
+          "consumption": 28416.44,
+          "cost": 3233.87
         },
         {
-          "date": "2025-01-16",
-          "consumption": 1876.5,
-          "cost": 160.89
+          "date": "2026-07-16",
+          "consumption": 30448.62,
+          "cost": 3031.68
         },
         {
-          "date": "2025-01-17",
-          "consumption": 2094.0,
-          "cost": 136.2
+          "date": "2026-07-17",
+          "consumption": 34035.58,
+          "cost": 2120.58
         },
         {
-          "date": "2025-01-18",
-          "consumption": 1650.0,
-          "cost": 71.05
+          "date": "2026-07-18",
+          "consumption": 33720.19,
+          "cost": 1003.65
         },
         {
-          "date": "2025-01-19",
-          "consumption": 1842.75,
-          "cost": 108.8
+          "date": "2026-07-19",
+          "consumption": 28772.22,
+          "cost": 579.54
         },
         {
-          "date": "2025-01-20",
-          "consumption": 2324.25,
-          "cost": 446.31
+          "date": "2026-07-20",
+          "consumption": 29568.27,
+          "cost": 1911.14
         },
         {
-          "date": "2025-01-21",
-          "consumption": 2515.5,
-          "cost": 407.11
+          "date": "2026-07-21",
+          "consumption": 26203.67,
+          "cost": 2185.41
         },
         {
-          "date": "2025-01-22",
-          "consumption": 2355.75,
-          "cost": 376.88
+          "date": "2026-07-22",
+          "consumption": 25012.6,
+          "cost": 1777.39
         },
         {
-          "date": "2025-01-23",
-          "consumption": 2507.25,
-          "cost": 266.25
+          "date": "2026-07-23",
+          "consumption": 26129.51,
+          "cost": 2283.58
         },
         {
-          "date": "2025-01-24",
-          "consumption": 2352.75,
-          "cost": 272.62
+          "date": "2026-07-24",
+          "consumption": 26939.75,
+          "cost": 1693.84
         },
         {
-          "date": "2025-01-25",
-          "consumption": 1752.0,
-          "cost": 31.21
+          "date": "2026-07-25",
+          "consumption": 26388.49,
+          "cost": 358.83
         },
         {
-          "date": "2025-01-26",
-          "consumption": 1671.0,
-          "cost": 133.19
+          "date": "2026-07-26",
+          "consumption": 29717.3,
+          "cost": 609.67
         },
         {
-          "date": "2025-01-27",
-          "consumption": 2280.0,
-          "cost": 193.11
+          "date": "2026-07-27",
+          "consumption": 29233.46,
+          "cost": 1148.94
         },
         {
-          "date": "2025-01-28",
-          "consumption": 1796.25,
-          "cost": 198.58
+          "date": "2026-07-28",
+          "consumption": 25825.7,
+          "cost": 304.57
         },
         {
-          "date": "2025-01-29",
-          "consumption": 2013.75,
-          "cost": 194.12
+          "date": "2026-07-29",
+          "consumption": 27352.13,
+          "cost": 1053.71
         },
         {
-          "date": "2025-01-30",
-          "consumption": 1838.25,
-          "cost": 161.11
+          "date": "2026-07-30",
+          "consumption": 31816.14,
+          "cost": 1198.22
         },
         {
-          "date": "2025-01-31",
-          "consumption": 1953.0,
-          "cost": 244.95
+          "date": "2026-07-31",
+          "consumption": 35355.82,
+          "cost": 494.25
         }
       ],
       "anomalies": [
         {
-          "date": "2025-01-06",
-          "hour": "10:00",
-          "consumption": 209.25,
-          "reason": "Anomāli augsts patēriņš"
+          "date": "2026-07-31",
+          "hour": "17:00",
+          "consumption": 2849.72,
+          "reason": "Tuvu atļautajai slodzei, Anomāli augsts patēriņš"
         },
         {
-          "date": "2025-01-09",
-          "hour": "18:00",
-          "consumption": 196.5,
-          "reason": "Anomāli augsts patēriņš"
-        },
-        {
-          "date": "2025-01-06",
-          "hour": "15:00",
-          "consumption": 192.0,
-          "reason": "Anomāli augsts patēriņš"
-        },
-        {
-          "date": "2024-11-19",
-          "hour": "12:00",
-          "consumption": 190.5,
-          "reason": "Anomāli augsts patēriņš"
-        },
-        {
-          "date": "2025-01-23",
-          "hour": "19:00",
-          "consumption": 190.5,
-          "reason": "Anomāli augsts patēriņš"
-        },
-        {
-          "date": "2025-01-06",
-          "hour": "09:00",
-          "consumption": 184.5,
-          "reason": "Anomāli augsts patēriņš"
-        },
-        {
-          "date": "2025-01-08",
-          "hour": "09:00",
-          "consumption": 184.5,
-          "reason": "Anomāli augsts patēriņš"
-        },
-        {
-          "date": "2024-12-12",
-          "hour": "18:00",
-          "consumption": 183.75,
-          "reason": "Anomāli augsts patēriņš"
-        },
-        {
-          "date": "2024-10-17",
-          "hour": "09:00",
-          "consumption": 183.0,
-          "reason": "Anomāli augsts patēriņš"
-        },
-        {
-          "date": "2024-12-13",
-          "hour": "09:00",
-          "consumption": 179.25,
-          "reason": "Anomāli augsts patēriņš"
-        },
-        {
-          "date": "2025-01-09",
-          "hour": "13:00",
-          "consumption": 177.75,
-          "reason": "Anomāli augsts patēriņš"
-        },
-        {
-          "date": "2025-01-04",
-          "hour": "12:00",
-          "consumption": 174.75,
-          "reason": "Anomāli augsts patēriņš"
-        },
-        {
-          "date": "2025-01-22",
-          "hour": "10:00",
-          "consumption": 174.0,
-          "reason": "Anomāli augsts patēriņš"
-        },
-        {
-          "date": "2025-01-12",
+          "date": "2026-07-31",
           "hour": "16:00",
-          "consumption": 173.25,
+          "consumption": 2813.72,
           "reason": "Anomāli augsts patēriņš"
         },
         {
-          "date": "2024-12-04",
-          "hour": "11:00",
-          "consumption": 170.25,
+          "date": "2026-07-17",
+          "hour": "16:00",
+          "consumption": 2672.6,
           "reason": "Anomāli augsts patēriņš"
         },
         {
-          "date": "2025-01-20",
+          "date": "2026-06-28",
           "hour": "15:00",
-          "consumption": 168.75,
+          "consumption": 2670.83,
           "reason": "Anomāli augsts patēriņš"
         },
         {
-          "date": "2024-11-22",
-          "hour": "09:00",
-          "consumption": 166.5,
+          "date": "2026-07-18",
+          "hour": "14:00",
+          "consumption": 2668.6,
           "reason": "Anomāli augsts patēriņš"
         },
         {
-          "date": "2025-01-03",
-          "hour": "11:00",
-          "consumption": 166.5,
+          "date": "2026-06-28",
+          "hour": "18:00",
+          "consumption": 2662.84,
           "reason": "Anomāli augsts patēriņš"
         },
         {
-          "date": "2024-10-25",
+          "date": "2026-07-31",
+          "hour": "15:00",
+          "consumption": 2645.67,
+          "reason": "Anomāli augsts patēriņš"
+        },
+        {
+          "date": "2026-06-28",
+          "hour": "19:00",
+          "consumption": 2638.28,
+          "reason": "Anomāli augsts patēriņš"
+        },
+        {
+          "date": "2026-07-17",
+          "hour": "17:00",
+          "consumption": 2636.6,
+          "reason": "Anomāli augsts patēriņš"
+        },
+        {
+          "date": "2026-06-28",
+          "hour": "17:00",
+          "consumption": 2634.83,
+          "reason": "Anomāli augsts patēriņš"
+        },
+        {
+          "date": "2026-06-21",
+          "hour": "16:00",
+          "consumption": 2618.83,
+          "reason": "Anomāli augsts patēriņš"
+        },
+        {
+          "date": "2026-06-21",
+          "hour": "15:00",
+          "consumption": 2614.83,
+          "reason": "Anomāli augsts patēriņš"
+        },
+        {
+          "date": "2026-06-28",
+          "hour": "14:00",
+          "consumption": 2594.83,
+          "reason": "Anomāli augsts patēriņš"
+        },
+        {
+          "date": "2026-07-31",
+          "hour": "18:00",
+          "consumption": 2585.72,
+          "reason": "Anomāli augsts patēriņš"
+        },
+        {
+          "date": "2026-07-31",
+          "hour": "14:00",
+          "consumption": 2585.59,
+          "reason": "Anomāli augsts patēriņš"
+        },
+        {
+          "date": "2026-06-28",
+          "hour": "16:00",
+          "consumption": 2582.83,
+          "reason": "Anomāli augsts patēriņš"
+        },
+        {
+          "date": "2026-07-31",
+          "hour": "19:00",
+          "consumption": 2573.78,
+          "reason": "Anomāli augsts patēriņš"
+        },
+        {
+          "date": "2026-07-17",
+          "hour": "18:00",
+          "consumption": 2572.6,
+          "reason": "Anomāli augsts patēriņš"
+        },
+        {
+          "date": "2026-07-31",
           "hour": "13:00",
-          "consumption": 165.75,
+          "consumption": 2565.59,
           "reason": "Anomāli augsts patēriņš"
         },
         {
-          "date": "2024-11-08",
-          "hour": "09:00",
-          "consumption": 164.25,
+          "date": "2026-07-31",
+          "hour": "12:00",
+          "consumption": 2557.59,
           "reason": "Anomāli augsts patēriņš"
         }
       ],
+      "solar": {
+        "detected": true,
+        "totalExport": 20.0,
+        "peakExport": 20.0,
+        "exportHours": 1,
+        "averageDailyExport": 0.05,
+        "topExportHours": [
+          {
+            "hour": "11:00",
+            "export": 20.0
+          }
+        ]
+      },
       "summary": {
-        "periodStart": "2024-02-01",
-        "periodEnd": "2025-01-31",
-        "totalConsumption": 448014.0,
-        "totalCost": 40238.99,
-        "averageHourlyConsumption": 51.02,
-        "averageDailyConsumption": 1224.08,
-        "peakHourlyConsumption": 209.25,
-        "currentAllowedLoadKw": 585.0,
-        "recommendedAllowedLoadKw": 220,
-        "anomalyCount": 447,
+        "periodStart": "2025-08-01",
+        "periodEnd": "2026-07-31",
+        "totalConsumption": 8596453.53,
+        "totalCost": 839265.0,
+        "averageHourlyConsumption": 981.55,
+        "averageDailyConsumption": 23551.93,
+        "peakHourlyConsumption": 2849.72,
+        "currentAllowedLoadKw": 3135,
+        "recommendedAllowedLoadKw": 3135,
+        "anomalyCount": 161,
         "hoursAboveRecommendedLoad": 0,
         "topPeakHours": [
           {
-            "hour": "13:00",
-            "consumption": 61.17
+            "hour": "18:00",
+            "consumption": 1629.46
           },
           {
-            "hour": "14:00",
-            "consumption": 60.78
+            "hour": "17:00",
+            "consumption": 1627.95
+          },
+          {
+            "hour": "16:00",
+            "consumption": 1617.77
           },
           {
             "hour": "15:00",
-            "consumption": 60.62
+            "consumption": 1603.15
           },
-          {
-            "hour": "12:00",
-            "consumption": 60.49
-          },
-          {
-            "hour": "11:00",
-            "consumption": 60.09
-          }
-        ]
-      }
-    },
-    {
-      "id": "43Z-STO018750161",
-      "name": "BIROJS",
-      "hourlyProfile": [
-        {
-          "hour": "00:00",
-          "consumption": 16.38
-        },
-        {
-          "hour": "01:00",
-          "consumption": 16.72
-        },
-        {
-          "hour": "02:00",
-          "consumption": 16.89
-        },
-        {
-          "hour": "03:00",
-          "consumption": 16.66
-        },
-        {
-          "hour": "04:00",
-          "consumption": 16.52
-        },
-        {
-          "hour": "05:00",
-          "consumption": 19.04
-        },
-        {
-          "hour": "06:00",
-          "consumption": 18.91
-        },
-        {
-          "hour": "07:00",
-          "consumption": 20.4
-        },
-        {
-          "hour": "08:00",
-          "consumption": 23.07
-        },
-        {
-          "hour": "09:00",
-          "consumption": 24.43
-        },
-        {
-          "hour": "10:00",
-          "consumption": 24.62
-        },
-        {
-          "hour": "11:00",
-          "consumption": 24.63
-        },
-        {
-          "hour": "12:00",
-          "consumption": 24.74
-        },
-        {
-          "hour": "13:00",
-          "consumption": 24.57
-        },
-        {
-          "hour": "14:00",
-          "consumption": 23.72
-        },
-        {
-          "hour": "15:00",
-          "consumption": 23.12
-        },
-        {
-          "hour": "16:00",
-          "consumption": 22.6
-        },
-        {
-          "hour": "17:00",
-          "consumption": 21.97
-        },
-        {
-          "hour": "18:00",
-          "consumption": 21.48
-        },
-        {
-          "hour": "19:00",
-          "consumption": 20.84
-        },
-        {
-          "hour": "20:00",
-          "consumption": 17.62
-        },
-        {
-          "hour": "21:00",
-          "consumption": 17.69
-        },
-        {
-          "hour": "22:00",
-          "consumption": 17.8
-        },
-        {
-          "hour": "23:00",
-          "consumption": 16.46
-        }
-      ],
-      "last30Days": [
-        {
-          "date": "2025-01-02",
-          "consumption": 1179.0,
-          "cost": 123.57
-        },
-        {
-          "date": "2025-01-03",
-          "consumption": 1223.25,
-          "cost": 108.23
-        },
-        {
-          "date": "2025-01-04",
-          "consumption": 900.75,
-          "cost": 86.17
-        },
-        {
-          "date": "2025-01-05",
-          "consumption": 985.5,
-          "cost": 92.05
-        },
-        {
-          "date": "2025-01-06",
-          "consumption": 1293.0,
-          "cost": 112.09
-        },
-        {
-          "date": "2025-01-07",
-          "consumption": 1310.25,
-          "cost": 108.92
-        },
-        {
-          "date": "2025-01-08",
-          "consumption": 1389.0,
-          "cost": 165.27
-        },
-        {
-          "date": "2025-01-09",
-          "consumption": 1340.25,
-          "cost": 153.92
-        },
-        {
-          "date": "2025-01-10",
-          "consumption": 1353.75,
-          "cost": 144.89
-        },
-        {
-          "date": "2025-01-11",
-          "consumption": 964.5,
-          "cost": 72.19
-        },
-        {
-          "date": "2025-01-12",
-          "consumption": 988.5,
-          "cost": 83.21
-        },
-        {
-          "date": "2025-01-13",
-          "consumption": 1380.0,
-          "cost": 153.84
-        },
-        {
-          "date": "2025-01-14",
-          "consumption": 1352.25,
-          "cost": 86.5
-        },
-        {
-          "date": "2025-01-15",
-          "consumption": 1253.25,
-          "cost": 216.71
-        },
-        {
-          "date": "2025-01-16",
-          "consumption": 1065.0,
-          "cost": 92.6
-        },
-        {
-          "date": "2025-01-17",
-          "consumption": 1307.25,
-          "cost": 86.88
-        },
-        {
-          "date": "2025-01-18",
-          "consumption": 909.75,
-          "cost": 35.97
-        },
-        {
-          "date": "2025-01-19",
-          "consumption": 919.5,
-          "cost": 53.4
-        },
-        {
-          "date": "2025-01-20",
-          "consumption": 1301.25,
-          "cost": 253.61
-        },
-        {
-          "date": "2025-01-21",
-          "consumption": 1263.0,
-          "cost": 199.18
-        },
-        {
-          "date": "2025-01-22",
-          "consumption": 1182.75,
-          "cost": 189.08
-        },
-        {
-          "date": "2025-01-23",
-          "consumption": 1177.5,
-          "cost": 129.14
-        },
-        {
-          "date": "2025-01-24",
-          "consumption": 1131.75,
-          "cost": 133.06
-        },
-        {
-          "date": "2025-01-25",
-          "consumption": 747.0,
-          "cost": 12.71
-        },
-        {
-          "date": "2025-01-26",
-          "consumption": 704.25,
-          "cost": 51.84
-        },
-        {
-          "date": "2025-01-27",
-          "consumption": 1147.5,
-          "cost": 103.32
-        },
-        {
-          "date": "2025-01-28",
-          "consumption": 1011.75,
-          "cost": 117.14
-        },
-        {
-          "date": "2025-01-29",
-          "consumption": 1162.5,
-          "cost": 111.85
-        },
-        {
-          "date": "2025-01-30",
-          "consumption": 1122.75,
-          "cost": 98.98
-        },
-        {
-          "date": "2025-01-31",
-          "consumption": 1146.0,
-          "cost": 146.09
-        }
-      ],
-      "anomalies": [
-        {
-          "date": "2024-12-18",
-          "hour": "13:00",
-          "consumption": 129.0,
-          "reason": "Pārsniedz atļauto slodzi, Anomāli augsts patēriņš"
-        },
-        {
-          "date": "2025-01-10",
-          "hour": "12:00",
-          "consumption": 114.75,
-          "reason": "Pārsniedz atļauto slodzi, Anomāli augsts patēriņš"
-        },
-        {
-          "date": "2025-01-17",
-          "hour": "10:00",
-          "consumption": 108.0,
-          "reason": "Pārsniedz atļauto slodzi, Anomāli augsts patēriņš"
-        },
-        {
-          "date": "2024-12-03",
-          "hour": "08:00",
-          "consumption": 103.5,
-          "reason": "Pārsniedz atļauto slodzi, Anomāli augsts patēriņš"
-        },
-        {
-          "date": "2025-01-21",
-          "hour": "08:00",
-          "consumption": 103.5,
-          "reason": "Pārsniedz atļauto slodzi, Anomāli augsts patēriņš"
-        },
-        {
-          "date": "2024-12-03",
-          "hour": "13:00",
-          "consumption": 102.0,
-          "reason": "Pārsniedz atļauto slodzi, Anomāli augsts patēriņš"
-        },
-        {
-          "date": "2025-01-08",
-          "hour": "08:00",
-          "consumption": 100.5,
-          "reason": "Pārsniedz atļauto slodzi, Anomāli augsts patēriņš"
-        },
-        {
-          "date": "2025-01-15",
-          "hour": "08:00",
-          "consumption": 99.0,
-          "reason": "Tuvu atļautajai slodzei, Anomāli augsts patēriņš"
-        },
-        {
-          "date": "2024-12-10",
-          "hour": "09:00",
-          "consumption": 98.25,
-          "reason": "Tuvu atļautajai slodzei, Anomāli augsts patēriņš"
-        },
-        {
-          "date": "2024-11-19",
-          "hour": "13:00",
-          "consumption": 94.5,
-          "reason": "Tuvu atļautajai slodzei, Anomāli augsts patēriņš"
-        },
-        {
-          "date": "2025-01-27",
-          "hour": "08:00",
-          "consumption": 94.5,
-          "reason": "Tuvu atļautajai slodzei, Anomāli augsts patēriņš"
-        },
-        {
-          "date": "2024-11-22",
-          "hour": "15:00",
-          "consumption": 89.25,
-          "reason": "Anomāli augsts patēriņš"
-        },
-        {
-          "date": "2024-12-13",
-          "hour": "13:00",
-          "consumption": 89.25,
-          "reason": "Anomāli augsts patēriņš"
-        },
-        {
-          "date": "2024-12-18",
-          "hour": "10:00",
-          "consumption": 89.25,
-          "reason": "Anomāli augsts patēriņš"
-        },
-        {
-          "date": "2024-12-18",
-          "hour": "09:00",
-          "consumption": 88.5,
-          "reason": "Anomāli augsts patēriņš"
-        },
-        {
-          "date": "2025-01-29",
-          "hour": "15:00",
-          "consumption": 88.5,
-          "reason": "Anomāli augsts patēriņš"
-        },
-        {
-          "date": "2024-11-27",
-          "hour": "08:00",
-          "consumption": 87.75,
-          "reason": "Anomāli augsts patēriņš"
-        },
-        {
-          "date": "2025-01-10",
-          "hour": "13:00",
-          "consumption": 87.0,
-          "reason": "Anomāli augsts patēriņš"
-        },
-        {
-          "date": "2024-11-22",
-          "hour": "16:00",
-          "consumption": 85.5,
-          "reason": "Anomāli augsts patēriņš"
-        },
-        {
-          "date": "2024-12-05",
-          "hour": "08:00",
-          "consumption": 82.5,
-          "reason": "Anomāli augsts patēriņš"
-        }
-      ],
-      "summary": {
-        "periodStart": "2024-02-01",
-        "periodEnd": "2025-01-31",
-        "totalConsumption": 179626.5,
-        "totalCost": 17002.35,
-        "averageHourlyConsumption": 20.45,
-        "averageDailyConsumption": 490.78,
-        "peakHourlyConsumption": 129.0,
-        "currentAllowedLoadKw": 100.0,
-        "recommendedAllowedLoadKw": 140,
-        "anomalyCount": 509,
-        "hoursAboveRecommendedLoad": 0,
-        "topPeakHours": [
-          {
-            "hour": "12:00",
-            "consumption": 24.74
-          },
-          {
-            "hour": "11:00",
-            "consumption": 24.63
-          },
-          {
-            "hour": "10:00",
-            "consumption": 24.62
-          },
-          {
-            "hour": "13:00",
-            "consumption": 24.57
-          },
-          {
-            "hour": "09:00",
-            "consumption": 24.43
-          }
-        ]
-      }
-    },
-    {
-      "id": "43Z-STO01875070W",
-      "name": "BIROJS",
-      "hourlyProfile": [
-        {
-          "hour": "00:00",
-          "consumption": 42.33
-        },
-        {
-          "hour": "01:00",
-          "consumption": 42.04
-        },
-        {
-          "hour": "02:00",
-          "consumption": 41.99
-        },
-        {
-          "hour": "03:00",
-          "consumption": 41.81
-        },
-        {
-          "hour": "04:00",
-          "consumption": 43.94
-        },
-        {
-          "hour": "05:00",
-          "consumption": 43.86
-        },
-        {
-          "hour": "06:00",
-          "consumption": 45.9
-        },
-        {
-          "hour": "07:00",
-          "consumption": 56.82
-        },
-        {
-          "hour": "08:00",
-          "consumption": 67.48
-        },
-        {
-          "hour": "09:00",
-          "consumption": 74.12
-        },
-        {
-          "hour": "10:00",
-          "consumption": 73.7
-        },
-        {
-          "hour": "11:00",
-          "consumption": 73.67
-        },
-        {
-          "hour": "12:00",
-          "consumption": 74.25
-        },
-        {
-          "hour": "13:00",
-          "consumption": 74.65
-        },
-        {
-          "hour": "14:00",
-          "consumption": 75.49
-        },
-        {
-          "hour": "15:00",
-          "consumption": 75.33
-        },
-        {
-          "hour": "16:00",
-          "consumption": 73.82
-        },
-        {
-          "hour": "17:00",
-          "consumption": 71.76
-        },
-        {
-          "hour": "18:00",
-          "consumption": 69.01
-        },
-        {
-          "hour": "19:00",
-          "consumption": 63.17
-        },
-        {
-          "hour": "20:00",
-          "consumption": 58.81
-        },
-        {
-          "hour": "21:00",
-          "consumption": 58.46
-        },
-        {
-          "hour": "22:00",
-          "consumption": 46.33
-        },
-        {
-          "hour": "23:00",
-          "consumption": 43.33
-        }
-      ],
-      "last30Days": [
-        {
-          "date": "2025-01-02",
-          "consumption": 1969.5,
-          "cost": 207.07
-        },
-        {
-          "date": "2025-01-03",
-          "consumption": 1968.75,
-          "cost": 175.04
-        },
-        {
-          "date": "2025-01-04",
-          "consumption": 1539.75,
-          "cost": 148.94
-        },
-        {
-          "date": "2025-01-05",
-          "consumption": 1647.0,
-          "cost": 154.18
-        },
-        {
-          "date": "2025-01-06",
-          "consumption": 2093.25,
-          "cost": 180.86
-        },
-        {
-          "date": "2025-01-07",
-          "consumption": 1989.0,
-          "cost": 165.07
-        },
-        {
-          "date": "2025-01-08",
-          "consumption": 2028.75,
-          "cost": 241.73
-        },
-        {
-          "date": "2025-01-09",
-          "consumption": 1984.5,
-          "cost": 230.36
-        },
-        {
-          "date": "2025-01-10",
-          "consumption": 1969.5,
-          "cost": 207.87
-        },
-        {
-          "date": "2025-01-11",
-          "consumption": 1509.75,
-          "cost": 115.23
-        },
-        {
-          "date": "2025-01-12",
-          "consumption": 1591.5,
-          "cost": 133.21
-        },
-        {
-          "date": "2025-01-13",
-          "consumption": 2070.75,
-          "cost": 229.1
-        },
-        {
-          "date": "2025-01-14",
-          "consumption": 1952.25,
-          "cost": 128.28
-        },
-        {
-          "date": "2025-01-15",
-          "consumption": 1830.75,
-          "cost": 318.68
-        },
-        {
-          "date": "2025-01-16",
-          "consumption": 1626.0,
-          "cost": 141.66
-        },
-        {
-          "date": "2025-01-17",
-          "consumption": 1874.25,
-          "cost": 122.51
-        },
-        {
-          "date": "2025-01-18",
-          "consumption": 1453.5,
-          "cost": 60.17
-        },
-        {
-          "date": "2025-01-19",
-          "consumption": 1487.25,
-          "cost": 87.61
-        },
-        {
-          "date": "2025-01-20",
-          "consumption": 2010.75,
-          "cost": 398.5
-        },
-        {
-          "date": "2025-01-21",
-          "consumption": 1948.5,
-          "cost": 310.73
-        },
-        {
-          "date": "2025-01-22",
-          "consumption": 1869.75,
-          "cost": 297.9
-        },
-        {
-          "date": "2025-01-23",
-          "consumption": 1884.0,
-          "cost": 203.0
-        },
-        {
-          "date": "2025-01-24",
-          "consumption": 1767.75,
-          "cost": 203.22
-        },
-        {
-          "date": "2025-01-25",
-          "consumption": 1427.25,
-          "cost": 25.95
-        },
-        {
-          "date": "2025-01-26",
-          "consumption": 1386.75,
-          "cost": 106.71
-        },
-        {
-          "date": "2025-01-27",
-          "consumption": 1704.0,
-          "cost": 149.03
-        },
-        {
-          "date": "2025-01-28",
-          "consumption": 1524.75,
-          "cost": 175.3
-        },
-        {
-          "date": "2025-01-29",
-          "consumption": 1790.25,
-          "cost": 172.3
-        },
-        {
-          "date": "2025-01-30",
-          "consumption": 1716.75,
-          "cost": 150.49
-        },
-        {
-          "date": "2025-01-31",
-          "consumption": 1698.0,
-          "cost": 214.22
-        }
-      ],
-      "anomalies": [
-        {
-          "date": "2024-08-07",
-          "hour": "15:00",
-          "consumption": 158.25,
-          "reason": "Anomāli augsts patēriņš"
-        },
-        {
-          "date": "2024-08-05",
-          "hour": "15:00",
-          "consumption": 155.25,
-          "reason": "Anomāli augsts patēriņš"
-        },
-        {
-          "date": "2024-08-07",
-          "hour": "14:00",
-          "consumption": 155.25,
-          "reason": "Anomāli augsts patēriņš"
-        },
-        {
-          "date": "2024-08-05",
-          "hour": "13:00",
-          "consumption": 153.0,
-          "reason": "Anomāli augsts patēriņš"
-        },
-        {
-          "date": "2024-08-09",
-          "hour": "14:00",
-          "consumption": 153.0,
-          "reason": "Anomāli augsts patēriņš"
-        },
-        {
-          "date": "2024-08-05",
-          "hour": "16:00",
-          "consumption": 152.25,
-          "reason": "Anomāli augsts patēriņš"
-        },
-        {
-          "date": "2024-08-07",
-          "hour": "13:00",
-          "consumption": 152.25,
-          "reason": "Anomāli augsts patēriņš"
-        },
-        {
-          "date": "2024-08-06",
-          "hour": "13:00",
-          "consumption": 151.5,
-          "reason": "Anomāli augsts patēriņš"
-        },
-        {
-          "date": "2024-08-08",
-          "hour": "15:00",
-          "consumption": 151.5,
-          "reason": "Anomāli augsts patēriņš"
-        },
-        {
-          "date": "2024-08-07",
-          "hour": "16:00",
-          "consumption": 150.75,
-          "reason": "Anomāli augsts patēriņš"
-        },
-        {
-          "date": "2024-08-05",
-          "hour": "14:00",
-          "consumption": 150.0,
-          "reason": "Anomāli augsts patēriņš"
-        },
-        {
-          "date": "2024-08-05",
-          "hour": "12:00",
-          "consumption": 149.25,
-          "reason": "Anomāli augsts patēriņš"
-        },
-        {
-          "date": "2024-08-06",
-          "hour": "15:00",
-          "consumption": 149.25,
-          "reason": "Anomāli augsts patēriņš"
-        },
-        {
-          "date": "2024-08-06",
-          "hour": "12:00",
-          "consumption": 148.5,
-          "reason": "Anomāli augsts patēriņš"
-        },
-        {
-          "date": "2024-08-06",
-          "hour": "14:00",
-          "consumption": 148.5,
-          "reason": "Anomāli augsts patēriņš"
-        },
-        {
-          "date": "2024-08-07",
-          "hour": "11:00",
-          "consumption": 145.5,
-          "reason": "Anomāli augsts patēriņš"
-        },
-        {
-          "date": "2024-08-08",
-          "hour": "16:00",
-          "consumption": 145.5,
-          "reason": "Anomāli augsts patēriņš"
-        },
-        {
-          "date": "2024-08-08",
-          "hour": "14:00",
-          "consumption": 144.75,
-          "reason": "Anomāli augsts patēriņš"
-        },
-        {
-          "date": "2024-08-05",
-          "hour": "17:00",
-          "consumption": 144.0,
-          "reason": "Anomāli augsts patēriņš"
-        },
-        {
-          "date": "2024-08-06",
-          "hour": "16:00",
-          "consumption": 144.0,
-          "reason": "Anomāli augsts patēriņš"
-        }
-      ],
-      "summary": {
-        "periodStart": "2024-02-01",
-        "periodEnd": "2025-01-31",
-        "totalConsumption": 524048.25,
-        "totalCost": 47965.97,
-        "averageHourlyConsumption": 59.67,
-        "averageDailyConsumption": 1431.83,
-        "peakHourlyConsumption": 158.25,
-        "currentAllowedLoadKw": 200.0,
-        "recommendedAllowedLoadKw": 170,
-        "anomalyCount": 122,
-        "hoursAboveRecommendedLoad": 0,
-        "topPeakHours": [
           {
             "hour": "14:00",
-            "consumption": 75.49
-          },
-          {
-            "hour": "15:00",
-            "consumption": 75.33
-          },
-          {
-            "hour": "13:00",
-            "consumption": 74.65
-          },
-          {
-            "hour": "12:00",
-            "consumption": 74.25
-          },
-          {
-            "hour": "09:00",
-            "consumption": 74.12
+            "consumption": 1593.78
           }
         ]
       }
     },
     {
-      "id": "43Z-STO01875071U",
-      "name": "BIROJS",
+      "id": "Objekts 2",
+      "name": "Objekts 2",
       "hourlyProfile": [
         {
           "hour": "00:00",
-          "consumption": 45.93
+          "consumption": 115.01
         },
         {
           "hour": "01:00",
-          "consumption": 45.85
+          "consumption": 115.28
         },
         {
           "hour": "02:00",
-          "consumption": 45.13
+          "consumption": 115.46
         },
         {
           "hour": "03:00",
-          "consumption": 43.47
+          "consumption": 114.28
         },
         {
           "hour": "04:00",
-          "consumption": 42.8
+          "consumption": 116.02
         },
         {
           "hour": "05:00",
-          "consumption": 43.01
+          "consumption": 122.26
         },
         {
           "hour": "06:00",
-          "consumption": 41.89
+          "consumption": 142.73
         },
         {
           "hour": "07:00",
-          "consumption": 45.46
+          "consumption": 235.83
         },
         {
           "hour": "08:00",
-          "consumption": 51.69
+          "consumption": 340.51
         },
         {
           "hour": "09:00",
-          "consumption": 54.68
+          "consumption": 464.66
         },
         {
           "hour": "10:00",
-          "consumption": 55.6
+          "consumption": 493.43
         },
         {
           "hour": "11:00",
-          "consumption": 56.0
+          "consumption": 499.45
         },
         {
           "hour": "12:00",
-          "consumption": 56.39
+          "consumption": 505.08
         },
         {
           "hour": "13:00",
-          "consumption": 57.75
+          "consumption": 506.42
         },
         {
           "hour": "14:00",
-          "consumption": 58.49
+          "consumption": 508.36
         },
         {
           "hour": "15:00",
-          "consumption": 58.59
+          "consumption": 513.22
         },
         {
           "hour": "16:00",
-          "consumption": 59.09
+          "consumption": 514.52
         },
         {
           "hour": "17:00",
-          "consumption": 58.46
+          "consumption": 512.95
         },
         {
           "hour": "18:00",
-          "consumption": 55.87
+          "consumption": 507.02
         },
         {
           "hour": "19:00",
-          "consumption": 51.3
+          "consumption": 455.45
         },
         {
           "hour": "20:00",
-          "consumption": 50.0
+          "consumption": 267.63
         },
         {
           "hour": "21:00",
-          "consumption": 51.26
+          "consumption": 152.01
         },
         {
           "hour": "22:00",
-          "consumption": 47.76
+          "consumption": 129.8
         },
         {
           "hour": "23:00",
-          "consumption": 47.34
+          "consumption": 117.97
         }
       ],
+      "exportHourlyProfile": [],
       "last30Days": [
         {
-          "date": "2025-01-02",
-          "consumption": 1557.0,
-          "cost": 162.71
+          "date": "2026-07-02",
+          "consumption": 9027.6,
+          "cost": 566.11
         },
         {
-          "date": "2025-01-03",
-          "consumption": 1868.25,
-          "cost": 158.22
+          "date": "2026-07-03",
+          "consumption": 8453.76,
+          "cost": 201.61
         },
         {
-          "date": "2025-01-04",
-          "consumption": 1647.75,
-          "cost": 152.26
+          "date": "2026-07-04",
+          "consumption": 8499.84,
+          "cost": 192.32
         },
         {
-          "date": "2025-01-05",
-          "consumption": 1552.5,
-          "cost": 141.19
+          "date": "2026-07-05",
+          "consumption": 7971.33,
+          "cost": 181.0
         },
         {
-          "date": "2025-01-06",
-          "consumption": 1725.0,
-          "cost": 147.91
+          "date": "2026-07-06",
+          "consumption": 8238.0,
+          "cost": 307.96
         },
         {
-          "date": "2025-01-07",
-          "consumption": 1362.75,
-          "cost": 117.63
+          "date": "2026-07-07",
+          "consumption": 7961.19,
+          "cost": 605.19
         },
         {
-          "date": "2025-01-08",
-          "consumption": 1677.75,
-          "cost": 201.69
+          "date": "2026-07-08",
+          "consumption": 8152.23,
+          "cost": 322.59
         },
         {
-          "date": "2025-01-09",
-          "consumption": 1892.25,
-          "cost": 210.37
+          "date": "2026-07-09",
+          "consumption": 8090.49,
+          "cost": 755.27
         },
         {
-          "date": "2025-01-10",
-          "consumption": 1860.75,
-          "cost": 184.65
+          "date": "2026-07-10",
+          "consumption": 8432.4,
+          "cost": 761.93
         },
         {
-          "date": "2025-01-11",
-          "consumption": 1626.75,
-          "cost": 119.61
+          "date": "2026-07-11",
+          "consumption": 8583.09,
+          "cost": 544.21
         },
         {
-          "date": "2025-01-12",
-          "consumption": 1562.25,
-          "cost": 133.8
+          "date": "2026-07-12",
+          "consumption": 8458.08,
+          "cost": 341.89
         },
         {
-          "date": "2025-01-13",
-          "consumption": 1854.0,
-          "cost": 190.86
+          "date": "2026-07-13",
+          "consumption": 9547.44,
+          "cost": 660.8
         },
         {
-          "date": "2025-01-14",
-          "consumption": 1533.0,
-          "cost": 103.63
+          "date": "2026-07-14",
+          "consumption": 9003.87,
+          "cost": 799.7
         },
         {
-          "date": "2025-01-15",
-          "consumption": 1659.75,
-          "cost": 269.04
+          "date": "2026-07-15",
+          "consumption": 9150.12,
+          "cost": 1028.04
         },
         {
-          "date": "2025-01-16",
-          "consumption": 1394.25,
-          "cost": 113.18
+          "date": "2026-07-16",
+          "consumption": 9206.52,
+          "cost": 862.88
         },
         {
-          "date": "2025-01-17",
-          "consumption": 1411.5,
-          "cost": 84.98
+          "date": "2026-07-17",
+          "consumption": 10265.97,
+          "cost": 586.39
         },
         {
-          "date": "2025-01-18",
-          "consumption": 1328.25,
-          "cost": 54.45
+          "date": "2026-07-18",
+          "consumption": 9784.29,
+          "cost": 246.4
         },
         {
-          "date": "2025-01-19",
-          "consumption": 1298.25,
-          "cost": 75.77
+          "date": "2026-07-19",
+          "consumption": 8528.85,
+          "cost": 122.69
         },
         {
-          "date": "2025-01-20",
-          "consumption": 1845.75,
-          "cost": 341.3
+          "date": "2026-07-20",
+          "consumption": 8962.77,
+          "cost": 585.13
         },
         {
-          "date": "2025-01-21",
-          "consumption": 1934.25,
-          "cost": 295.25
+          "date": "2026-07-21",
+          "consumption": 8271.6,
+          "cost": 678.65
         },
         {
-          "date": "2025-01-22",
-          "consumption": 1864.5,
-          "cost": 283.57
+          "date": "2026-07-22",
+          "consumption": 7991.04,
+          "cost": 553.92
         },
         {
-          "date": "2025-01-23",
-          "consumption": 1712.25,
-          "cost": 176.89
+          "date": "2026-07-23",
+          "consumption": 8023.32,
+          "cost": 694.31
         },
         {
-          "date": "2025-01-24",
-          "consumption": 1793.25,
-          "cost": 189.56
+          "date": "2026-07-24",
+          "consumption": 8415.09,
+          "cost": 517.23
         },
         {
-          "date": "2025-01-25",
-          "consumption": 1223.25,
-          "cost": 19.44
+          "date": "2026-07-25",
+          "consumption": 8263.62,
+          "cost": 99.46
         },
         {
-          "date": "2025-01-26",
-          "consumption": 1133.25,
-          "cost": 84.57
+          "date": "2026-07-26",
+          "consumption": 8118.03,
+          "cost": 108.44
         },
         {
-          "date": "2025-01-27",
-          "consumption": 1362.0,
-          "cost": 116.19
+          "date": "2026-07-27",
+          "consumption": 8821.38,
+          "cost": 341.26
         },
         {
-          "date": "2025-01-28",
-          "consumption": 1517.25,
-          "cost": 159.09
+          "date": "2026-07-28",
+          "consumption": 8312.04,
+          "cost": 94.8
         },
         {
-          "date": "2025-01-29",
-          "consumption": 1531.5,
-          "cost": 144.68
+          "date": "2026-07-29",
+          "consumption": 8194.35,
+          "cost": 304.29
         },
         {
-          "date": "2025-01-30",
-          "consumption": 1083.0,
-          "cost": 90.99
+          "date": "2026-07-30",
+          "consumption": 9397.11,
+          "cost": 332.67
         },
         {
-          "date": "2025-01-31",
-          "consumption": 1150.5,
-          "cost": 140.69
+          "date": "2026-07-31",
+          "consumption": 10411.56,
+          "cost": 130.83
         }
       ],
       "anomalies": [
         {
-          "date": "2024-03-11",
-          "hour": "16:00",
-          "consumption": 171.0,
-          "reason": "Anomāli augsts patēriņš"
-        },
-        {
-          "date": "2024-03-11",
+          "date": "2026-06-28",
           "hour": "17:00",
-          "consumption": 168.75,
-          "reason": "Anomāli augsts patēriņš"
+          "consumption": 872.31,
+          "reason": "Tuvu atļautajai slodzei, Anomāli augsts patēriņš"
         },
         {
-          "date": "2024-03-11",
-          "hour": "18:00",
-          "consumption": 162.0,
-          "reason": "Anomāli augsts patēriņš"
-        },
-        {
-          "date": "2024-03-06",
-          "hour": "14:00",
-          "consumption": 158.25,
-          "reason": "Anomāli augsts patēriņš"
-        },
-        {
-          "date": "2024-03-11",
-          "hour": "15:00",
-          "consumption": 157.5,
-          "reason": "Anomāli augsts patēriņš"
-        },
-        {
-          "date": "2024-03-05",
-          "hour": "15:00",
-          "consumption": 156.75,
-          "reason": "Anomāli augsts patēriņš"
-        },
-        {
-          "date": "2024-03-12",
-          "hour": "14:00",
-          "consumption": 155.25,
-          "reason": "Anomāli augsts patēriņš"
-        },
-        {
-          "date": "2024-03-12",
-          "hour": "17:00",
-          "consumption": 155.25,
-          "reason": "Anomāli augsts patēriņš"
-        },
-        {
-          "date": "2024-03-12",
-          "hour": "18:00",
-          "consumption": 155.25,
-          "reason": "Anomāli augsts patēriņš"
-        },
-        {
-          "date": "2024-03-05",
+          "date": "2026-06-28",
           "hour": "16:00",
-          "consumption": 153.75,
+          "consumption": 869.73,
+          "reason": "Tuvu atļautajai slodzei, Anomāli augsts patēriņš"
+        },
+        {
+          "date": "2026-06-28",
+          "hour": "15:00",
+          "consumption": 868.38,
+          "reason": "Tuvu atļautajai slodzei, Anomāli augsts patēriņš"
+        },
+        {
+          "date": "2026-06-28",
+          "hour": "18:00",
+          "consumption": 849.27,
           "reason": "Anomāli augsts patēriņš"
         },
         {
-          "date": "2024-03-12",
-          "hour": "16:00",
-          "consumption": 153.75,
+          "date": "2026-07-31",
+          "hour": "13:00",
+          "consumption": 846.36,
           "reason": "Anomāli augsts patēriņš"
         },
         {
-          "date": "2024-03-12",
+          "date": "2026-06-28",
+          "hour": "14:00",
+          "consumption": 845.25,
+          "reason": "Anomāli augsts patēriņš"
+        },
+        {
+          "date": "2026-07-31",
+          "hour": "14:00",
+          "consumption": 838.14,
+          "reason": "Anomāli augsts patēriņš"
+        },
+        {
+          "date": "2026-07-31",
           "hour": "12:00",
-          "consumption": 152.25,
+          "consumption": 817.8,
           "reason": "Anomāli augsts patēriņš"
         },
         {
-          "date": "2024-03-06",
+          "date": "2026-06-28",
           "hour": "13:00",
-          "consumption": 151.5,
+          "consumption": 800.28,
           "reason": "Anomāli augsts patēriņš"
         },
         {
-          "date": "2024-03-12",
+          "date": "2026-06-29",
           "hour": "13:00",
-          "consumption": 151.5,
+          "consumption": 796.38,
           "reason": "Anomāli augsts patēriņš"
         },
         {
-          "date": "2024-03-12",
-          "hour": "15:00",
-          "consumption": 151.5,
+          "date": "2026-06-29",
+          "hour": "16:00",
+          "consumption": 793.68,
           "reason": "Anomāli augsts patēriņš"
         },
         {
-          "date": "2024-03-11",
+          "date": "2026-06-29",
           "hour": "14:00",
-          "consumption": 147.75,
+          "consumption": 793.17,
           "reason": "Anomāli augsts patēriņš"
         },
         {
-          "date": "2024-03-06",
+          "date": "2026-06-29",
+          "hour": "12:00",
+          "consumption": 791.61,
+          "reason": "Anomāli augsts patēriņš"
+        },
+        {
+          "date": "2026-07-17",
           "hour": "15:00",
-          "consumption": 147.0,
+          "consumption": 789.21,
           "reason": "Anomāli augsts patēriņš"
         },
         {
-          "date": "2024-03-11",
-          "hour": "19:00",
-          "consumption": 145.5,
+          "date": "2026-06-29",
+          "hour": "11:00",
+          "consumption": 789.12,
           "reason": "Anomāli augsts patēriņš"
         },
         {
-          "date": "2024-08-01",
-          "hour": "15:00",
-          "consumption": 145.5,
+          "date": "2026-07-17",
+          "hour": "14:00",
+          "consumption": 788.13,
           "reason": "Anomāli augsts patēriņš"
         },
         {
-          "date": "2024-07-31",
-          "hour": "15:00",
-          "consumption": 144.75,
+          "date": "2026-06-28",
+          "hour": "12:00",
+          "consumption": 787.59,
+          "reason": "Anomāli augsts patēriņš"
+        },
+        {
+          "date": "2026-06-29",
+          "hour": "17:00",
+          "consumption": 782.43,
+          "reason": "Anomāli augsts patēriņš"
+        },
+        {
+          "date": "2026-07-17",
+          "hour": "16:00",
+          "consumption": 780.9,
+          "reason": "Anomāli augsts patēriņš"
+        },
+        {
+          "date": "2026-06-29",
+          "hour": "18:00",
+          "consumption": 780.39,
           "reason": "Anomāli augsts patēriņš"
         }
       ],
+      "solar": {
+        "detected": true,
+        "totalExport": 0.0,
+        "peakExport": 0.0,
+        "exportHours": 0,
+        "averageDailyExport": 0.0,
+        "topExportHours": []
+      },
       "summary": {
-        "periodStart": "2024-02-01",
-        "periodEnd": "2025-01-31",
-        "totalConsumption": 447820.5,
-        "totalCost": 39918.32,
-        "averageHourlyConsumption": 50.99,
-        "averageDailyConsumption": 1223.55,
-        "peakHourlyConsumption": 171.0,
-        "currentAllowedLoadKw": 200.0,
-        "recommendedAllowedLoadKw": 180,
-        "anomalyCount": 338,
+        "periodStart": "2025-08-01",
+        "periodEnd": "2026-07-31",
+        "totalConsumption": 2761120.92,
+        "totalCost": 266405.07,
+        "averageHourlyConsumption": 315.27,
+        "averageDailyConsumption": 7564.71,
+        "peakHourlyConsumption": 872.31,
+        "currentAllowedLoadKw": 960,
+        "recommendedAllowedLoadKw": 960,
+        "anomalyCount": 89,
         "hoursAboveRecommendedLoad": 0,
         "topPeakHours": [
           {
             "hour": "16:00",
-            "consumption": 59.09
+            "consumption": 514.52
           },
           {
             "hour": "15:00",
-            "consumption": 58.59
-          },
-          {
-            "hour": "14:00",
-            "consumption": 58.49
+            "consumption": 513.22
           },
           {
             "hour": "17:00",
-            "consumption": 58.46
+            "consumption": 512.95
           },
           {
-            "hour": "13:00",
-            "consumption": 57.75
+            "hour": "14:00",
+            "consumption": 508.36
+          },
+          {
+            "hour": "18:00",
+            "consumption": 507.02
           }
         ]
       }

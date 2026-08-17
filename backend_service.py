@@ -7,11 +7,79 @@ from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent
 DATA_FILE = BASE_DIR / "data" / "app-data.json"
-SOURCE_FILES = [
-    BASE_DIR / "ofisu komplekss.xlsx",
-    BASE_DIR / "NP_Cenas_LV.xlsx",
-    BASE_DIR / "scripts" / "generate_data.py",
+PRICE_FILE = BASE_DIR / "NP_Cenas_LV.xlsx"
+SOURCE_STATE_FILE = BASE_DIR / "data" / "selected-source.json"
+DEFAULT_CONSUMPTION_SOURCE = "ofisu komplekss.xlsx"
+CLIENT_PROFILES = {
+    "office": {
+        "label": "Ofiss",
+        "profile_label": "biroja profilam",
+        "intensity_thresholds": (140, 220),
+        "default_flexible_share": 0.12,
+        "expensive_load_share": 0.30,
+        "equipment_flexible_hours": 2.0,
+        "shift_title": "Pārcel biroja elastīgo slodzi uz lētajām stundām",
+        "shift_hint": "Prioritāte ir ventilācija, dzesēšana, siltumsūkņi un uzlādes punkti.",
+        "load_title": "Optimizē pieslēguma slodzi biroja grafikam",
+        "load_hint": "Biroja tipa objektā pīķi parasti veido rīta ieslēgšanās un HVAC darba režīmi.",
+        "alert_title": "Iestati anomāliju brīdinājumus biroja patēriņam",
+        "model_title": "Precizē biroja ēkas energoefektivitātes modeli",
+        "missing_intensity": "Pievieno telpu platību un iekārtu parametrus, lai modelis novērtētu biroja energoefektivitāti.",
+        "installed_power_text": "Šo apjomu vari izmantot, lai plānotu HVAC, apgaismojuma un citu biroja slodžu pārcelšanu pa stundām.",
+    },
+    "manufacturing": {
+        "label": "Ražotne",
+        "profile_label": "ražošanas profilam",
+        "intensity_thresholds": (220, 380),
+        "default_flexible_share": 0.08,
+        "expensive_load_share": 0.18,
+        "equipment_flexible_hours": 1.5,
+        "shift_title": "Pārcel ražošanas ciklus uz lētākām stundām",
+        "shift_hint": "Skaties uz kompresoriem, sūkņiem, akumulācijas procesiem un iekšējo patēriņu, kas var izmantot SES izstrādi.",
+        "load_title": "Optimizē pieslēguma slodzi ražotnes režīmam",
+        "load_hint": "Ražotnēs ieteikums fokusējas uz maiņu grafiku, iekārtu starta pīķiem un SES pašpatēriņu.",
+        "alert_title": "Iestati anomāliju brīdinājumus ražošanas procesiem",
+        "model_title": "Precizē ražotnes energoefektivitātes modeli",
+        "missing_intensity": "Pievieno telpu platību un galveno iekārtu parametrus, lai modelis novērtētu ražotnes energoefektivitāti.",
+        "installed_power_text": "Šo apjomu vari izmantot, lai salāgotu ražošanas iekārtu grafiku ar SES izstrādi un lētajām stundām.",
+    },
+    "retail": {
+        "label": "Tirdzniecības centrs",
+        "profile_label": "tirdzniecības profilam",
+        "intensity_thresholds": (260, 420),
+        "default_flexible_share": 0.10,
+        "expensive_load_share": 0.22,
+        "equipment_flexible_hours": 1.8,
+        "shift_title": "Pārbīdi tirdzniecības centra slodzi ārpus dārgākajām stundām",
+        "shift_hint": "Lielākais ieguvums parasti ir aukstuma iekārtās, ventilācijā, apgaismojumā un uzkopšanas procesos pēc darba laika.",
+        "load_title": "Optimizē pieslēguma slodzi tirdzniecības plūsmai",
+        "load_hint": "Tirdzniecības objektiem svarīgi nošķirt klientu pīķa stundas no tehnisko sistēmu darba grafika.",
+        "alert_title": "Iestati anomāliju brīdinājumus tirdzniecības patēriņam",
+        "model_title": "Precizē tirdzniecības centra energoefektivitātes modeli",
+        "missing_intensity": "Pievieno telpu platību un iekārtu parametrus, lai modelis novērtētu tirdzniecības objekta energoefektivitāti.",
+        "installed_power_text": "Šo apjomu vari izmantot, lai balansētu aukstuma, ventilācijas un apgaismojuma sistēmu slodzi pa stundām.",
+    },
+}
+SOLAR_OPTIONS = [
+    {"value": "yes", "label": "Jā"},
+    {"value": "no", "label": "Nē"},
 ]
+DEFAULT_SOLAR_PRIORITY_HOURS = ["10:00", "11:00", "12:00", "13:00", "14:00"]
+DEFAULT_SOLAR_SHAPE = {
+    "06:00": 0.08,
+    "07:00": 0.18,
+    "08:00": 0.34,
+    "09:00": 0.55,
+    "10:00": 0.74,
+    "11:00": 0.9,
+    "12:00": 1.0,
+    "13:00": 0.96,
+    "14:00": 0.82,
+    "15:00": 0.62,
+    "16:00": 0.4,
+    "17:00": 0.22,
+    "18:00": 0.1,
+}
 
 _DATA_CACHE = None
 _DATA_MTIME = None
@@ -33,16 +101,151 @@ def _fmt_number(value, digits=1):
     return f"{value:.{digits}f}".replace(".", ",")
 
 
-def ensure_dataset():
+def normalize_client_type(value):
+    if value in CLIENT_PROFILES:
+        return value
+    return "office"
+
+
+def normalize_solar_setting(value, fallback=False):
+    if isinstance(value, str):
+        normalized = value.strip().lower()
+        if normalized in {"yes", "true", "1"}:
+            return True
+        if normalized in {"no", "false", "0"}:
+            return False
+    return bool(fallback)
+
+
+def _resolve_solar_priority_hours(solar_data):
+    hours = [item["hour"] for item in solar_data.get("topExportHours", []) if item.get("hour")]
+    return hours[:5] or DEFAULT_SOLAR_PRIORITY_HOURS
+
+
+def _estimate_solar_window_consumption(hourly_map, solar_hours, solar_capacity_kw):
+    if solar_capacity_kw <= 0:
+        return 0.0
+    return round(sum(min(hourly_map.get(hour, 0), solar_capacity_kw) for hour in solar_hours), 2)
+
+
+def _average_consumption_for_hours(hourly_map, hours):
+    if not hours:
+        return 0.0
+    values = [hourly_map.get(hour, 0) for hour in hours]
+    return round(sum(values) / len(values), 2)
+
+
+def _build_forecast_generation_map(hours, export_map, solar_capacity_kw):
+    if solar_capacity_kw <= 0:
+        return {hour: 0.0 for hour in hours}
+
+    positive_exports = [value for value in export_map.values() if value > 0]
+    if positive_exports:
+        peak_export = max(positive_exports)
+        return {
+            hour: round(solar_capacity_kw * (export_map.get(hour, 0) / peak_export), 2)
+            if export_map.get(hour, 0) > 0
+            else 0.0
+            for hour in hours
+        }
+
+    return {
+        hour: round(solar_capacity_kw * DEFAULT_SOLAR_SHAPE.get(hour, 0), 2)
+        for hour in hours
+    }
+
+
+def _source_label(path):
+    return path.stem.replace("_", " ")
+
+
+def get_available_consumption_sources():
+    return sorted(
+        [
+            path
+            for path in BASE_DIR.glob("*.xlsx")
+            if path.is_file() and path.name != PRICE_FILE.name and not path.name.startswith("~$")
+        ],
+        key=lambda item: item.name.lower(),
+    )
+
+
+def get_active_consumption_source():
+    available_sources = get_available_consumption_sources()
+    if not available_sources:
+        raise FileNotFoundError("Nav atrasts neviens patēriņa datu Excel fails.")
+
+    selected_name = DEFAULT_CONSUMPTION_SOURCE
+    if SOURCE_STATE_FILE.exists():
+        try:
+            selected_name = json.loads(SOURCE_STATE_FILE.read_text(encoding="utf-8")).get("fileName") or selected_name
+        except (json.JSONDecodeError, OSError):
+            selected_name = DEFAULT_CONSUMPTION_SOURCE
+
+    for path in available_sources:
+        if path.name == selected_name:
+            return path
+
+    return next((path for path in available_sources if path.name == DEFAULT_CONSUMPTION_SOURCE), available_sources[0])
+
+
+def get_available_source_options():
+    active_source = get_active_consumption_source()
+    return {
+        "activeSource": {
+            "fileName": active_source.name,
+            "label": _source_label(active_source),
+        },
+        "availableSources": [
+            {
+                "fileName": path.name,
+                "label": _source_label(path),
+            }
+            for path in get_available_consumption_sources()
+        ],
+    }
+
+
+def set_active_consumption_source(file_name):
+    available_sources = {path.name: path for path in get_available_consumption_sources()}
+    selected_source = available_sources.get(file_name)
+    if selected_source is None:
+        raise KeyError(f"Source file '{file_name}' not found")
+
+    SOURCE_STATE_FILE.parent.mkdir(exist_ok=True)
+    SOURCE_STATE_FILE.write_text(json.dumps({"fileName": selected_source.name}, ensure_ascii=False, indent=2), encoding="utf-8")
+
+    global _DATA_CACHE, _DATA_MTIME
+    _DATA_CACHE = None
+    _DATA_MTIME = None
+
+    ensure_dataset(force=True)
+    return selected_source
+
+
+def ensure_dataset(force=False):
+    active_source = get_active_consumption_source()
     data_missing = not DATA_FILE.exists()
     source_newer = False
+    source_changed = False
+    source_files = [
+        active_source,
+        PRICE_FILE,
+        BASE_DIR / "scripts" / "generate_data.py",
+        SOURCE_STATE_FILE,
+    ]
+
     if not data_missing:
         data_mtime = DATA_FILE.stat().st_mtime
-        source_newer = any(path.exists() and path.stat().st_mtime > data_mtime for path in SOURCE_FILES)
+        source_newer = any(path.exists() and path.stat().st_mtime > data_mtime for path in source_files)
+        try:
+            source_changed = json.loads(DATA_FILE.read_text(encoding="utf-8")).get("sourceFile") != active_source.name
+        except (json.JSONDecodeError, OSError):
+            source_changed = True
 
-    if data_missing or source_newer:
+    if force or data_missing or source_newer or source_changed:
         subprocess.run(
-            [sys.executable, str(BASE_DIR / "scripts" / "generate_data.py")],
+            [sys.executable, str(BASE_DIR / "scripts" / "generate_data.py"), "--source", str(active_source)],
             cwd=BASE_DIR,
             check=True,
         )
@@ -59,21 +262,31 @@ def load_dataset():
     return _DATA_CACHE
 
 
-def _build_insights(selected_object, inputs, tomorrow_prices):
+def _build_insights(selected_object, inputs, tomorrow_prices, client_type, has_solar):
+    profile = CLIENT_PROFILES[normalize_client_type(client_type)]
+    solar_data = selected_object.get("solar", {})
     installed_power_kw = (
         (inputs["equipmentCount"] * inputs["equipmentPowerWatts"]) / 1000
         if inputs["equipmentCount"] > 0 and inputs["equipmentPowerWatts"] > 0
         else 0
     )
+    solar_capacity_kw = inputs["solarCapacityKw"] if has_solar else 0.0
 
     expensive_hours = [item["hour"] for item in tomorrow_prices["expensiveHours"]]
     cheap_hours = [item["hour"] for item in tomorrow_prices["cheapestHours"]]
     hourly_map = {item["hour"]: item["consumption"] for item in selected_object["hourlyProfile"]}
+    solar_priority_hours = _resolve_solar_priority_hours(solar_data)
+    top_export_hours = solar_priority_hours[:3]
+    solar_window_consumption = _estimate_solar_window_consumption(hourly_map, solar_priority_hours, solar_capacity_kw)
+    average_solar_hour_consumption = _average_consumption_for_hours(hourly_map, solar_priority_hours)
 
     expensive_load = sum(hourly_map.get(hour, 0) for hour in expensive_hours)
-    default_flexible_energy = selected_object["summary"]["averageDailyConsumption"] * 0.12
-    equipment_flexible_energy = installed_power_kw * 2 if installed_power_kw > 0 else 0
-    shiftable_energy = min(expensive_load * 0.3, max(default_flexible_energy, equipment_flexible_energy))
+    default_flexible_energy = selected_object["summary"]["averageDailyConsumption"] * profile["default_flexible_share"]
+    equipment_flexible_energy = installed_power_kw * profile["equipment_flexible_hours"] if installed_power_kw > 0 else 0
+    shiftable_energy = min(
+        expensive_load * profile["expensive_load_share"],
+        max(default_flexible_energy, equipment_flexible_energy),
+    )
 
     avg_expensive_price = sum(item["price"] for item in tomorrow_prices["expensiveHours"]) / len(
         tomorrow_prices["expensiveHours"]
@@ -103,14 +316,15 @@ def _build_insights(selected_object, inputs, tomorrow_prices):
     intensity_value = None
     intensity_label = "nav novērtēts"
     intensity_tone = "warning"
-    intensity_text = "Pievieno telpu platību un iekārtu parametrus, lai backend modelis novērtētu efektivitātes intensitāti."
+    intensity_text = profile["missing_intensity"]
 
     if inputs["area"] > 0:
         intensity_value = selected_object["summary"]["totalConsumption"] / inputs["area"]
-        if intensity_value < 140:
+        low_threshold, high_threshold = profile["intensity_thresholds"]
+        if intensity_value < low_threshold:
             intensity_label = "ļoti labs"
             intensity_tone = "success"
-        elif intensity_value <= 220:
+        elif intensity_value <= high_threshold:
             intensity_label = "pieņemams"
             intensity_tone = "warning"
         else:
@@ -118,7 +332,7 @@ def _build_insights(selected_object, inputs, tomorrow_prices):
             intensity_tone = "danger"
         intensity_text = (
             f"Aprēķinātā patēriņa intensitāte ir {_fmt_number(intensity_value, 1)} kWh/m² gadā, "
-            f"kas biroja profilam ir {intensity_label}."
+            f"kas {profile['profile_label']} ir {intensity_label}."
         )
 
     load_text = (
@@ -126,29 +340,63 @@ def _build_insights(selected_object, inputs, tomorrow_prices):
         f"{_fmt_number(selected_object['summary']['currentAllowedLoadKw'], 0)} kW uz aptuveni "
         f"{_fmt_number(selected_object['summary']['recommendedAllowedLoadKw'], 0)} kW."
         if load_reduction_kw >= 15
-        else "Pašreizējā atļautā slodze jau ir tuvu ieteicamajai drošības rezervei."
+        else f"Pašreizējā atļautā slodze {profile['profile_label']} jau ir tuvu ieteicamajai drošības rezervei."
     )
 
     anomaly_count = selected_object["summary"]["anomalyCount"]
+    solar_text = ""
+    solar_capacity_text = ""
+    solar_self_use_potential = 0.0
+    if has_solar:
+        baseline_export = solar_data.get("averageDailyExport", 0)
+        solar_self_use_potential = round(min(baseline_export, shiftable_energy), 2) if baseline_export > 0 else 0.0
+        if solar_capacity_kw > 0:
+            solar_self_use_potential = round(
+                min(
+                    baseline_export if baseline_export > 0 else solar_window_consumption,
+                    max(solar_window_consumption, shiftable_energy),
+                ),
+                2,
+            )
+            solar_capacity_text = (
+                f" Ievadītā SES jauda {_fmt_number(solar_capacity_kw, 1)} kW tipiskajās saules stundās "
+                f"ļauj nosegt līdz {_fmt_number(solar_window_consumption, 1)} kWh/dienā no objekta patēriņa."
+            )
+            if solar_capacity_kw > average_solar_hour_consumption * 1.15:
+                solar_capacity_text += (
+                    f" Dienas vidus vidējais patēriņš ir tikai {_fmt_number(average_solar_hour_consumption, 1)} kWh/h, "
+                    "tāpēc bez papildu slodzes pārcelšanas daļa izstrādes, visticamāk, nonāks eksportā."
+                )
+
+        if solar_data.get("totalExport", 0) > 0:
+            solar_text = (
+                f" Objektā redzama SES ģenerācija ar aptuveni {_fmt_number(solar_data['averageDailyExport'], 1)} kWh eksporta dienā; "
+                f"vērtīgākās pašpatēriņa stundas ir {', '.join(top_export_hours or ['11:00', '12:00', '13:00'])}."
+            )
+        else:
+            solar_text = " Objektam ir norādīts SES profils, tāpēc ieteikumi prioritizē slodzes pārnešanu uz dienas vidu un pašpatēriņu."
+        solar_text = f"{solar_text}{solar_capacity_text}"
+
     recommendations = [
         {
             "tone": "success" if potential_savings >= 3 else "warning",
-            "title": "Pārcel elastīgo slodzi uz lētajām stundām",
+            "title": profile["shift_title"],
             "text": (
                 f"Lētākās stundas ir {', '.join(cheap_hours)}, bet dārgākās ir {', '.join(expensive_hours)}. "
-                f"Pārbīdot ap {_fmt_number(shiftable_energy, 1)} kWh, iespējamais ietaupījums ir {_fmt_number(potential_savings, 2)} EUR dienā."
+                f"Pārbīdot ap {_fmt_number(shiftable_energy, 1)} kWh, iespējamais ietaupījums ir {_fmt_number(potential_savings, 2)} EUR dienā. "
+                f"{profile['shift_hint']}{solar_text}"
             ),
             "metric": f"{_fmt_number(potential_savings, 2)} EUR/dienā",
         },
         {
             "tone": "success" if load_reduction_kw >= 15 else "warning",
-            "title": "Optimizē pieslēguma slodzi",
-            "text": load_text,
+            "title": profile["load_title"],
+            "text": f"{load_text} {profile['load_hint']}",
             "metric": f"{_fmt_number(load_reduction_kw, 0)} kW rezerve",
         },
         {
             "tone": "danger" if anomaly_count > 20 else "warning",
-            "title": "Iestati anomāliju brīdinājumus",
+            "title": profile["alert_title"],
             "text": (
                 f"Vēsturē atrasti {anomaly_count} anomāli patēriņa notikumi. "
                 f"Riska stundas visbiežāk ir {', '.join(item['hour'] for item in selected_object['summary']['topPeakHours'][:3])}."
@@ -157,11 +405,42 @@ def _build_insights(selected_object, inputs, tomorrow_prices):
         },
         {
             "tone": intensity_tone,
-            "title": "Precizē ēkas energoefektivitātes modeli",
+            "title": profile["model_title"],
             "text": intensity_text,
             "metric": f"{_fmt_number(intensity_value, 1)} kWh/m²" if intensity_value is not None else "Trūkst platības",
         },
     ]
+
+    if has_solar:
+        solar_metric = (
+            f"{_fmt_number(solar_data.get('averageDailyExport', 0), 1)} kWh/dienā"
+            if solar_data.get("averageDailyExport", 0) > 0
+            else "SES profils aktīvs"
+        )
+        recommendations.append(
+            {
+                "tone": "success",
+                "title": "Palielini SES pašpatēriņu",
+                "text": (
+                    f"Plāno elastīgās slodzes dienas vidū un sinhronizē tās ar stundām {', '.join(top_export_hours or ['11:00', '12:00', '13:00'])}. "
+                    "Tas samazina nodošanu tīklā un palīdz izmantot paša saražoto enerģiju objektā."
+                ),
+                "metric": solar_metric,
+            }
+        )
+        if solar_capacity_kw > 0:
+            recommendations.append(
+                {
+                    "tone": "warning" if solar_capacity_kw > average_solar_hour_consumption * 1.15 else "success",
+                    "title": "Salāgo SES jaudu ar dienas patēriņu",
+                    "text": (
+                        f"Ievadītā SES jauda {_fmt_number(solar_capacity_kw, 1)} kW stundās {', '.join(top_export_hours or DEFAULT_SOLAR_PRIORITY_HOURS[:3])} "
+                        f"var nosegt līdz {_fmt_number(solar_window_consumption, 1)} kWh/dienā no tipiskā patēriņa. "
+                        f"Prioritizē elastīgās slodzes šajās stundās, lai izmantotu ap {_fmt_number(solar_self_use_potential, 1)} kWh/dienā uz vietas."
+                    ),
+                    "metric": f"{_fmt_number(solar_capacity_kw, 1)} kW SES",
+                }
+            )
 
     if installed_power_kw > 0:
         recommendations.append(
@@ -172,7 +451,7 @@ def _build_insights(selected_object, inputs, tomorrow_prices):
                 "title": "Salīdzini uzstādīto jaudu ar limitu",
                 "text": (
                     f"Ievadītais iekārtu parks veido aptuveni {_fmt_number(installed_power_kw, 1)} kW uzstādītās jaudas. "
-                    "Šo apjomu vari izmantot, lai plānotu slodzes pārcelšanu pa stundām."
+                    f"{profile['installed_power_text']}"
                 ),
                 "metric": f"{_fmt_number(installed_power_kw, 1)} kW",
             }
@@ -196,16 +475,38 @@ def _build_insights(selected_object, inputs, tomorrow_prices):
             ),
         },
     ]
+    if has_solar:
+        status_chips.append(
+            {
+                "tone": "success",
+                "label": (
+                    f"SES jauda {_fmt_number(solar_capacity_kw, 1)} kW"
+                    if solar_capacity_kw > 0
+                    else (
+                        f"SES eksports {_fmt_number(solar_data.get('averageDailyExport', 0), 1)} kWh/dienā"
+                        if solar_data.get("averageDailyExport", 0) > 0
+                        else "SES profils ieslēgts"
+                    )
+                ),
+            }
+        )
 
     return {
         "installedPowerKw": round(installed_power_kw, 2),
+        "solarCapacityKw": round(solar_capacity_kw, 2),
+        "solarWindowConsumptionKwh": round(solar_window_consumption, 2),
+        "solarSelfUsePotentialKwh": round(solar_self_use_potential, 2),
+        "solarPriorityHours": solar_priority_hours,
+        "averageSolarHourConsumption": round(average_solar_hour_consumption, 2),
         "shiftableEnergy": round(shiftable_energy, 2),
         "potentialSavings": _round_currency(potential_savings),
         "loadReductionKw": round(load_reduction_kw, 2),
         "loadReservePercent": round(load_reserve_percent, 1),
-        "scenarioText": f"{intensity_text} {load_text}",
+        "scenarioText": f"{intensity_text} {load_text}{solar_text}",
         "recommendations": recommendations,
         "statusChips": status_chips,
+        "clientTypeLabel": profile["label"],
+        "hasSolar": has_solar,
     }
 
 
@@ -284,12 +585,98 @@ def _build_cards(selected_object, insights):
     ]
 
 
+def _build_solar_summary(selected_object, insights, has_solar):
+    solar_data = selected_object.get("solar", {})
+    export_profile = selected_object.get("exportHourlyProfile", [])
+    export_map = {item["hour"]: item["export"] for item in export_profile}
+    consumption_map = {item["hour"]: item["consumption"] for item in selected_object["hourlyProfile"]}
+    hours = sorted(set(consumption_map) | set(export_map))
+    solar_priority_hours = set(insights.get("solarPriorityHours", DEFAULT_SOLAR_PRIORITY_HOURS))
+    solar_capacity_kw = insights.get("solarCapacityKw", 0)
+    forecast_generation_map = _build_forecast_generation_map(hours, export_map, solar_capacity_kw)
+    overlap_rows = [
+        {
+            "hour": hour,
+            "consumption": round(consumption_map.get(hour, 0), 2),
+            "export": round(export_map.get(hour, 0), 2),
+            "forecastGeneration": round(forecast_generation_map.get(hour, 0), 2),
+            "selfUsePotential": round(min(export_map.get(hour, 0), consumption_map.get(hour, 0)), 2),
+            "capacityUsePotential": (
+                round(min(consumption_map.get(hour, 0), forecast_generation_map.get(hour, 0)), 2)
+                if solar_capacity_kw > 0 and hour in solar_priority_hours
+                else 0.0
+            ),
+        }
+        for hour in hours
+    ]
+    for item in overlap_rows:
+        item["recommendedSelfUsePotential"] = round(
+            min(item["consumption"], max(item["selfUsePotential"], item["capacityUsePotential"])),
+            2,
+        )
+    top_self_use_hours = [
+        item
+        for item in sorted(overlap_rows, key=lambda row: row["recommendedSelfUsePotential"], reverse=True)[:3]
+        if item["recommendedSelfUsePotential"] > 0
+    ]
+    self_use_potential = insights.get("solarSelfUsePotentialKwh", 0) if has_solar else 0
+
+    return {
+        "cards": [
+            {
+                "label": "Ievadītā SES jauda",
+                "value": round(solar_capacity_kw, 1),
+                "unit": "kW",
+                "note": (
+                    "Izmantota, lai precizētu pašpatēriņa ieteikumus."
+                    if solar_capacity_kw > 0
+                    else "Ievadi SES jaudu, lai ieteikumi balstītos arī uz uzstādīto jaudu."
+                ),
+            },
+            {
+                "label": "Vidējais SES eksports",
+                "value": round(solar_data.get("averageDailyExport", 0), 1),
+                "unit": "kWh/dienā",
+                "note": "Cik enerģijas vidēji tiek nodots tīklā.",
+            },
+            {
+                "label": "Pašpatēriņa potenciāls",
+                "value": self_use_potential,
+                "unit": "kWh/dienā",
+                "note": (
+                    "Aptuvenais apjoms, ko varētu novirzīt no eksporta uz iekšējo patēriņu."
+                    if solar_data.get("averageDailyExport", 0) > 0
+                    else "Aprēķins balstīts uz ievadīto SES jaudu un dienas vidus patēriņa profilu."
+                ),
+            },
+            {
+                "label": "Ieteicamās SES stundas",
+                "value": len(top_self_use_hours),
+                "unit": "st.",
+                "note": ", ".join(item["hour"] for item in top_self_use_hours) if top_self_use_hours else "Nav noteiktas",
+            },
+        ],
+        "recommendedHours": top_self_use_hours,
+        "chart": {
+            "items": overlap_rows,
+            "secondaryValueKey": "forecastGeneration" if solar_capacity_kw > 0 else "export",
+            "secondaryLabel": "Prognozētā SES izstrāde" if solar_capacity_kw > 0 else "SES eksports",
+            "emptyMessage": (
+                "Prognozētajai SES izstrādei nav pieejamu stundu datu."
+                if solar_capacity_kw > 0
+                else "SES eksportam nav pieejamu stundu datu."
+            ),
+        },
+    }
+
+
 def get_bootstrap_data():
     data = load_dataset()
     objects = data["objects"]
     total_consumption = sum(item["summary"]["totalConsumption"] for item in objects)
     total_cost = sum(item["summary"]["totalCost"] for item in objects)
     total_anomalies = sum(item["summary"]["anomalyCount"] for item in objects)
+    source_options = get_available_source_options()
 
     portfolio = sorted(
         [
@@ -309,10 +696,19 @@ def get_bootstrap_data():
 
     return {
         "generatedAt": data["generatedAt"],
+        "sourceFile": data.get("sourceFile"),
+        "sourceHasSolar": data.get("sourceHasSolar", False),
         "defaultObjectId": objects[0]["id"] if objects else None,
         "marketPricePeriod": data["marketPricePeriod"],
         "tomorrowPriceDate": data["tomorrowPrices"]["date"],
         "objects": [{"id": item["id"], "name": item["name"]} for item in objects],
+        "activeSource": source_options["activeSource"],
+        "availableSources": source_options["availableSources"],
+        "clientTypeOptions": [
+            {"value": key, "label": value["label"]}
+            for key, value in CLIENT_PROFILES.items()
+        ],
+        "solarOptions": SOLAR_OPTIONS,
         "globalSummary": {
             "objectCount": len(objects),
             "totalConsumption": round(total_consumption, 0),
@@ -329,17 +725,24 @@ def get_dashboard_data(object_id, query_args):
     selected_object = next((item for item in data["objects"] if item["id"] == object_id), None)
     if selected_object is None:
         raise KeyError(f"Object '{object_id}' not found")
+    client_type = normalize_client_type(query_args.get("clientType"))
+    has_solar = normalize_solar_setting(
+        query_args.get("hasSolar"),
+        fallback=selected_object.get("solar", {}).get("detected", data.get("sourceHasSolar", False)),
+    )
 
     inputs = {
         "area": _parse_number(query_args.get("area")),
         "equipmentCount": _parse_number(query_args.get("equipmentCount")),
         "equipmentPowerWatts": _parse_number(query_args.get("equipmentPowerWatts")),
+        "solarCapacityKw": _parse_number(query_args.get("solarCapacityKw")),
     }
 
-    insights = _build_insights(selected_object, inputs, data["tomorrowPrices"])
+    insights = _build_insights(selected_object, inputs, data["tomorrowPrices"], client_type, has_solar)
     portfolio = get_bootstrap_data()["portfolio"]
     rank = next((index + 1 for index, item in enumerate(portfolio) if item["id"] == object_id), None)
     plan_rows = _plan_rows(selected_object, data["tomorrowPrices"])
+    solar_summary = _build_solar_summary(selected_object, insights, has_solar)
 
     return {
         "generatedAt": data["generatedAt"],
@@ -356,9 +759,13 @@ def get_dashboard_data(object_id, query_args):
             "tomorrowPriceDate": data["tomorrowPrices"]["date"],
         },
         "inputs": inputs,
+        "clientType": client_type,
+        "clientTypeLabel": insights["clientTypeLabel"],
+        "hasSolar": has_solar,
+        "solarLabel": "SES uzstādīts" if has_solar else "Bez SES",
         "cards": _build_cards(selected_object, insights),
         "scenarioSummary": {
-            "title": "Scenārija novērtējums",
+            "title": f"Scenārija novērtējums - {insights['clientTypeLabel']}",
             "text": insights["scenarioText"],
         },
         "statusChips": insights["statusChips"],
@@ -372,14 +779,17 @@ def get_dashboard_data(object_id, query_args):
             "consumptionHourly": selected_object["hourlyProfile"],
             "priceHourly": data["tomorrowPrices"]["hourly"],
             "dailyTrend": selected_object["last30Days"],
+            "solarComparison": solar_summary["chart"],
         },
         "planRows": plan_rows,
         "alerts": selected_object["anomalies"][:12],
+        "solarSummary": solar_summary,
         "benchmark": {
             "portfolioRank": rank,
             "portfolioSize": len(portfolio),
             "installedPowerKw": insights["installedPowerKw"],
             "loadReductionKw": insights["loadReductionKw"],
             "shiftableEnergy": insights["shiftableEnergy"],
+            "solarCapacityKw": insights["solarCapacityKw"],
         },
     }

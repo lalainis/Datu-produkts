@@ -50,6 +50,54 @@ body.modal-open {
   padding: 28px;
 }
 
+.app-shell.is-locked {
+  opacity: 0.08;
+  pointer-events: none;
+  user-select: none;
+}
+
+.startup-dialog-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgba(14, 29, 53, 0.26);
+  backdrop-filter: blur(12px);
+}
+
+.startup-dialog-backdrop[hidden] {
+  display: none;
+}
+
+.startup-dialog {
+  width: min(560px, 100%);
+  padding: 30px;
+  border-radius: 28px;
+  background: rgba(255, 255, 255, 0.96);
+  border: 1px solid rgba(18, 45, 83, 0.14);
+  box-shadow: 0 28px 56px rgba(23, 52, 94, 0.22);
+}
+
+.startup-dialog-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.startup-dialog-text {
+  margin-bottom: 18px;
+  color: #35557e;
+  line-height: 1.6;
+}
+
+.startup-button {
+  width: 100%;
+  margin-top: 8px;
+}
+
 .hero {
   display: grid;
   grid-template-columns: 1.4fr 0.9fr;
@@ -279,6 +327,12 @@ h2 {
   font-size: 0.9rem;
   color: #223a59;
   font-weight: 700;
+}
+
+.field-hint {
+  color: var(--muted);
+  font-size: 0.8rem;
+  line-height: 1.4;
 }
 
 .field input,
@@ -547,6 +601,15 @@ thead th {
   gap: 14px;
 }
 
+.solar-metric-card {
+  background: linear-gradient(180deg, rgba(58, 210, 159, 0.12), rgba(255, 255, 255, 0.42));
+  border-color: rgba(26, 169, 122, 0.16);
+}
+
+.solar-hours-list {
+  margin-top: 16px;
+}
+
 .recommendation.success {
   background: rgba(58, 210, 159, 0.09);
 }
@@ -681,6 +744,11 @@ thead th {
   filter: drop-shadow(0 8px 14px rgba(23, 166, 128, 0.14));
 }
 
+.comparison-line-solar {
+  stroke: #f0a823;
+  filter: drop-shadow(0 8px 14px rgba(240, 168, 35, 0.16));
+}
+
 .comparison-dot {
   fill: #ffffff;
   stroke-width: 3;
@@ -693,6 +761,10 @@ thead th {
 
 .comparison-dot-price {
   stroke: #17a680;
+}
+
+.comparison-dot-solar {
+  stroke: #f0a823;
 }
 
 .comparison-points {
@@ -772,6 +844,15 @@ thead th {
   border-radius: 4px;
   margin-right: 6px;
   background: linear-gradient(180deg, #8fe6c4 0%, #17a680 100%);
+}
+
+.legend-solar {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border-radius: 4px;
+  margin-right: 6px;
+  background: linear-gradient(180deg, #ffd47e 0%, #f0a823 100%);
 }
 
 .chart-card {

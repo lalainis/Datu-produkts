@@ -3,7 +3,7 @@
 Šī ir web aplikācija ar Python backend un interaktīvu dashboard frontend, kas izmanto:
 
 - [Promt.docx](./Promt.docx) prasības
-- [ofisu komplekss.xlsx](./ofisu%20komplekss.xlsx) vēsturiskā patēriņa datus
+- [ofisu komplekss.xlsx](./ofisu%20komplekss.xlsx), [Razotne ar SES.xlsx](./Razotne%20ar%20SES.xlsx) un [Tirdzniecibas_centrs_ar SES un EU.xlsx](./Tirdzniecibas_centrs_ar%20SES%20un%20EU.xlsx) vēsturiskā patēriņa datus
 - [NP_Cenas_LV.xlsx](./NP_Cenas_LV.xlsx) Nord Pool cenu datus
 
 ## Ko rāda aplikācija
@@ -13,6 +13,7 @@
 - novērtējumu, vai var samazināt atļauto slodzi
 - anomālu patēriņa notikumu sarakstu
 - iespēju precizēt modeli ar telpu platību, iekārtu skaitu un jaudu
+- datu importa faila izvēli pie palaišanas
 
 ## Arhitektūra
 

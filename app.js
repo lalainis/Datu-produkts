@@ -3,15 +3,30 @@ const state = {
   dashboard: null,
   selectedObjectId: null,
   selectedPortfolioIds: new Set(),
+  clientType: "office",
+  hasSolar: false,
   requestToken: 0,
   activeModalChartId: null,
 };
 
 const refs = {
+  appShell: document.getElementById("appShell"),
+  startupDialogBackdrop: document.getElementById("startupDialogBackdrop"),
+  startupDialog: document.getElementById("startupDialog"),
+  startupSourceSelect: document.getElementById("startupSourceSelect"),
+  startupClientTypeSelect: document.getElementById("startupClientTypeSelect"),
+  startupSolarSelect: document.getElementById("startupSolarSelect"),
+  startupImportButton: document.getElementById("startupImportButton"),
   heroStatus: document.getElementById("heroStatus"),
   heroMeta: document.getElementById("heroMeta"),
   generatedAt: document.getElementById("generatedAt"),
   globalCards: document.getElementById("globalCards"),
+  sourceSelect: document.getElementById("sourceSelect"),
+  clientTypeSelect: document.getElementById("clientTypeSelect"),
+  solarSelect: document.getElementById("solarSelect"),
+  solarCapacityField: document.getElementById("solarCapacityField"),
+  solarCapacityInput: document.getElementById("solarCapacityInput"),
+  importSourceButton: document.getElementById("importSourceButton"),
   objectSelect: document.getElementById("objectSelect"),
   areaInput: document.getElementById("areaInput"),
   equipmentCountInput: document.getElementById("equipmentCountInput"),
@@ -29,10 +44,16 @@ const refs = {
   expensiveHours: document.getElementById("expensiveHours"),
   benchmarkCards: document.getElementById("benchmarkCards"),
   summaryCards: document.getElementById("summaryCards"),
+  solarSummarySection: document.getElementById("solarSummarySection"),
+  solarSummaryCards: document.getElementById("solarSummaryCards"),
+  solarRecommendedHours: document.getElementById("solarRecommendedHours"),
   recommendations: document.getElementById("recommendations"),
   consumptionChart: document.getElementById("consumptionChart"),
   priceChart: document.getElementById("priceChart"),
   spotComparisonChart: document.getElementById("spotComparisonChart"),
+  solarComparisonSection: document.getElementById("solarComparisonSection"),
+  solarComparisonDescription: document.getElementById("solarComparisonDescription"),
+  solarComparisonChart: document.getElementById("solarComparisonChart"),
   planChart: document.getElementById("planChart"),
   planTableBody: document.getElementById("planTableBody"),
   dailyTrendChart: document.getElementById("dailyTrendChart"),
@@ -48,6 +69,8 @@ const integerFormat = new Intl.NumberFormat("lv-LV", {
 });
 
 const inputStorageKey = "energy-dashboard-object-inputs-v1";
+const clientTypeStorageKey = "energy-dashboard-client-types-v1";
+const solarStorageKey = "energy-dashboard-solar-v1";
 
 let inputTimer = null;
 
@@ -59,20 +82,75 @@ initialise().catch((error) => {
 });
 
 async function initialise() {
-  setLoadingState(true, "Ielādē backend kopsavilkumu...");
-  renderChartLoadingState();
-  state.bootstrap = await fetchJson("/api/bootstrap");
-  state.selectedObjectId = state.bootstrap.defaultObjectId;
-  state.selectedPortfolioIds = new Set(state.selectedObjectId ? [state.selectedObjectId] : []);
-  populateObjectSelect(state.bootstrap.objects, state.selectedObjectId);
-  renderGlobalSummary(state.bootstrap);
-  renderPortfolio(state.bootstrap.portfolio);
-  restoreSavedInputs(state.selectedObjectId);
+  setLoadingState(true, "Ielādē datu avotu sarakstu...");
+  applyBootstrapData(await fetchJson("/api/bootstrap"));
   wireEvents();
-  await refreshDashboard("Aprēķina objekta analītiku...");
+  openStartupDialog();
+}
+
+function getStoredSolarSelections() {
+  const raw = window.localStorage.getItem(solarStorageKey);
+  if (!raw) {
+    return {};
+  }
+
+  try {
+    const parsed = JSON.parse(raw);
+    return parsed && typeof parsed === "object" ? parsed : {};
+  } catch (_error) {
+    return {};
+  }
+}
+
+function setStoredSolarSelections(data) {
+  window.localStorage.setItem(solarStorageKey, JSON.stringify(data));
 }
 
 function wireEvents() {
+  refs.startupSourceSelect.addEventListener("change", () => {
+    refs.sourceSelect.value = refs.startupSourceSelect.value;
+    const nextType = resolveClientTypeForSource(refs.startupSourceSelect.value);
+    applyClientTypeSelection(nextType);
+    updateImportButtonState();
+  });
+
+  refs.startupClientTypeSelect.addEventListener("change", () => {
+    applyClientTypeSelection(refs.startupClientTypeSelect.value);
+  });
+
+  refs.startupSolarSelect.addEventListener("change", () => {
+    applySolarSelection(refs.startupSolarSelect.value);
+  });
+
+  refs.startupImportButton.addEventListener("click", async () => {
+    refs.sourceSelect.value = refs.startupSourceSelect.value;
+    applyClientTypeSelection(refs.startupClientTypeSelect.value);
+    await importSelectedSource({ force: true, closeStartup: true });
+  });
+
+  refs.sourceSelect.addEventListener("change", () => {
+    refs.startupSourceSelect.value = refs.sourceSelect.value;
+    const nextType = resolveClientTypeForSource(refs.sourceSelect.value);
+    applyClientTypeSelection(nextType);
+    updateImportButtonState();
+  });
+
+  refs.clientTypeSelect.addEventListener("change", () => {
+    applyClientTypeSelection(refs.clientTypeSelect.value);
+    saveClientTypeSelection();
+    refreshDashboard("Pielāgo scenāriju klienta tipam...");
+  });
+
+  refs.solarSelect.addEventListener("change", () => {
+    applySolarSelection(refs.solarSelect.value);
+    saveSolarSelection();
+    refreshDashboard("Pielāgo scenāriju SES profilam...");
+  });
+
+  refs.importSourceButton.addEventListener("click", async () => {
+    await importSelectedSource();
+  });
+
   refs.objectSelect.addEventListener("change", () => {
     saveCurrentInputs(state.selectedObjectId);
     state.selectedObjectId = refs.objectSelect.value;
@@ -142,7 +220,7 @@ function wireEvents() {
     refreshDashboard("Atjauno atlasīto objektu scenāriju...");
   });
 
-  [refs.areaInput, refs.equipmentCountInput, refs.equipmentPowerInput].forEach((input) => {
+  [refs.areaInput, refs.equipmentCountInput, refs.equipmentPowerInput, refs.solarCapacityInput].forEach((input) => {
     input.addEventListener("input", () => {
       saveCurrentInputs(state.selectedObjectId);
       window.clearTimeout(inputTimer);
@@ -160,6 +238,7 @@ function wireEvents() {
     refs.areaInput.value = "";
     refs.equipmentCountInput.value = "";
     refs.equipmentPowerInput.value = "";
+    refs.solarCapacityInput.value = "";
     clearSavedInputs(state.selectedObjectId);
     refreshDashboard("Atjauno sākotnējo scenāriju...");
   });
@@ -208,9 +287,12 @@ async function refreshDashboard(message) {
   try {
     const params = new URLSearchParams({
       objectId: state.selectedObjectId,
+      clientType: state.clientType,
+      hasSolar: state.hasSolar ? "yes" : "no",
       area: refs.areaInput.value || "0",
       equipmentCount: refs.equipmentCountInput.value || "0",
       equipmentPowerWatts: refs.equipmentPowerInput.value || "0",
+      solarCapacityKw: refs.solarCapacityInput.value || "0",
     });
 
     const dashboard = await fetchJson(`/api/dashboard?${params.toString()}`);
@@ -243,6 +325,132 @@ function populateObjectSelect(objects, selectedObjectId) {
   refs.objectSelect.value = selectedObjectId;
 }
 
+function populateSourceSelect(sources, activeFileName) {
+  const optionsMarkup = sources
+    .map((item) => `<option value="${escapeHtml(item.fileName)}">${escapeHtml(item.label)}</option>`)
+    .join("");
+  refs.sourceSelect.innerHTML = optionsMarkup;
+  refs.startupSourceSelect.innerHTML = optionsMarkup;
+  refs.sourceSelect.value = activeFileName;
+  refs.startupSourceSelect.value = activeFileName;
+  updateImportButtonState();
+}
+
+function populateClientTypeSelect(options) {
+  const optionsMarkup = options
+    .map((item) => `<option value="${escapeHtml(item.value)}">${escapeHtml(item.label)}</option>`)
+    .join("");
+  refs.clientTypeSelect.innerHTML = optionsMarkup;
+  refs.startupClientTypeSelect.innerHTML = optionsMarkup;
+  applyClientTypeSelection(resolveClientTypeForSource(state.bootstrap.activeSource.fileName));
+}
+
+function populateSolarSelect(options) {
+  const optionsMarkup = options
+    .map((item) => `<option value="${escapeHtml(item.value)}">${escapeHtml(item.label)}</option>`)
+    .join("");
+  refs.solarSelect.innerHTML = optionsMarkup;
+  refs.startupSolarSelect.innerHTML = optionsMarkup;
+  applySolarSelection(resolveSolarForSource(state.bootstrap.activeSource.fileName));
+}
+
+function updateImportButtonState() {
+  if (!state.bootstrap || !state.bootstrap.activeSource) {
+    refs.importSourceButton.disabled = true;
+    refs.startupImportButton.disabled = true;
+    return;
+  }
+
+  refs.importSourceButton.disabled = refs.sourceSelect.value === state.bootstrap.activeSource.fileName;
+  refs.startupImportButton.disabled = !refs.startupSourceSelect.value;
+}
+
+function applyBootstrapData(bootstrap, preferredObjectId) {
+  state.bootstrap = bootstrap;
+  const resolvedObjectId = bootstrap.objects.some((item) => item.id === preferredObjectId)
+    ? preferredObjectId
+    : bootstrap.defaultObjectId;
+  state.selectedObjectId = resolvedObjectId;
+  state.selectedPortfolioIds = new Set(resolvedObjectId ? [resolvedObjectId] : []);
+  populateSourceSelect(bootstrap.availableSources, bootstrap.activeSource.fileName);
+  populateClientTypeSelect(bootstrap.clientTypeOptions);
+  populateSolarSelect(bootstrap.solarOptions);
+  populateObjectSelect(bootstrap.objects, resolvedObjectId);
+  renderGlobalSummary(bootstrap);
+  renderPortfolio(bootstrap.portfolio);
+  restoreSavedInputs(resolvedObjectId);
+}
+
+async function importSelectedSource(options = {}) {
+  const { force = false, closeStartup = false } = options;
+  if (!state.bootstrap) {
+    return;
+  }
+
+  const selectedSourceFile = refs.sourceSelect.value;
+  const pendingClientType = refs.clientTypeSelect.value;
+  const pendingSolarValue = refs.solarSelect.value;
+  state.clientType = pendingClientType;
+  state.hasSolar = pendingSolarValue === "yes";
+  if (!force && selectedSourceFile === state.bootstrap.activeSource.fileName) {
+    return;
+  }
+
+  saveCurrentInputs(state.selectedObjectId);
+  refs.importSourceButton.disabled = true;
+  refs.startupImportButton.disabled = true;
+  setLoadingState(true, "Importē atlasīto datu failu...");
+  renderChartLoadingState();
+
+  try {
+    const bootstrap = await fetchJson("/api/source", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        fileName: selectedSourceFile,
+      }),
+    });
+    applyBootstrapData(bootstrap);
+    applyClientTypeSelection(pendingClientType);
+    applySolarSelection(pendingSolarValue);
+    saveClientTypeSelection();
+    saveSolarSelection();
+    if (closeStartup) {
+      closeStartupDialog();
+    }
+    await refreshDashboard("Aprēķina objekta analītiku...");
+  } catch (error) {
+    console.error(error);
+    refs.heroStatus.textContent = "Importa kļūda";
+    refs.heroStatus.className = "hero-status error";
+    refs.scenarioTitle.textContent = "Neizdevās importēt datu failu";
+    refs.scenarioText.textContent = error.message;
+    refs.startupImportButton.disabled = false;
+    updateImportButtonState();
+  }
+}
+
+function openStartupDialog() {
+  refs.appShell.classList.add("is-locked");
+  refs.startupDialogBackdrop.hidden = false;
+  document.body.classList.add("modal-open");
+  refs.startupSourceSelect.value = state.bootstrap.activeSource.fileName;
+  applyClientTypeSelection(resolveClientTypeForSource(state.bootstrap.activeSource.fileName));
+  applySolarSelection(resolveSolarForSource(state.bootstrap.activeSource.fileName));
+  updateImportButtonState();
+  window.setTimeout(() => {
+    refs.startupSourceSelect.focus();
+  }, 0);
+}
+
+function closeStartupDialog() {
+  refs.appShell.classList.remove("is-locked");
+  refs.startupDialogBackdrop.hidden = true;
+  document.body.classList.remove("modal-open");
+}
+
 function getStoredInputs() {
   const raw = window.localStorage.getItem(inputStorageKey);
   if (!raw) {
@@ -266,6 +474,7 @@ function readCurrentInputs() {
     area: refs.areaInput.value,
     equipmentCount: refs.equipmentCountInput.value,
     equipmentPowerWatts: refs.equipmentPowerInput.value,
+    solarCapacityKw: refs.solarCapacityInput.value,
   };
 }
 
@@ -273,36 +482,132 @@ function applyInputs(inputs) {
   refs.areaInput.value = inputs && Object.prototype.hasOwnProperty.call(inputs, "area") ? inputs.area : "";
   refs.equipmentCountInput.value = inputs && Object.prototype.hasOwnProperty.call(inputs, "equipmentCount") ? inputs.equipmentCount : "";
   refs.equipmentPowerInput.value = inputs && Object.prototype.hasOwnProperty.call(inputs, "equipmentPowerWatts") ? inputs.equipmentPowerWatts : "";
+  refs.solarCapacityInput.value = inputs && Object.prototype.hasOwnProperty.call(inputs, "solarCapacityKw") ? inputs.solarCapacityKw : "";
 }
 
 function restoreSavedInputs(objectId) {
-  if (!objectId) {
+  const storageKey = getInputStorageObjectKey(objectId);
+  if (!storageKey) {
     applyInputs(null);
     return;
   }
 
   const data = getStoredInputs();
-  applyInputs(data[objectId] || null);
+  applyInputs(data[storageKey] || null);
 }
 
 function saveCurrentInputs(objectId) {
-  if (!objectId) {
+  const storageKey = getInputStorageObjectKey(objectId);
+  if (!storageKey) {
     return;
   }
 
   const data = getStoredInputs();
-  data[objectId] = readCurrentInputs();
+  data[storageKey] = readCurrentInputs();
   setStoredInputs(data);
 }
 
 function clearSavedInputs(objectId) {
-  if (!objectId) {
+  const storageKey = getInputStorageObjectKey(objectId);
+  if (!storageKey) {
     return;
   }
 
   const data = getStoredInputs();
-  delete data[objectId];
+  delete data[storageKey];
   setStoredInputs(data);
+}
+
+function getInputStorageObjectKey(objectId) {
+  if (!objectId || !state.bootstrap || !state.bootstrap.activeSource) {
+    return null;
+  }
+
+  return `${state.bootstrap.activeSource.fileName}:${objectId}`;
+}
+
+function getStoredClientTypes() {
+  const raw = window.localStorage.getItem(clientTypeStorageKey);
+  if (!raw) {
+    return {};
+  }
+
+  try {
+    const parsed = JSON.parse(raw);
+    return parsed && typeof parsed === "object" ? parsed : {};
+  } catch (_error) {
+    return {};
+  }
+}
+
+function setStoredClientTypes(data) {
+  window.localStorage.setItem(clientTypeStorageKey, JSON.stringify(data));
+}
+
+function inferClientTypeFromSource(fileName) {
+  const normalized = (fileName || "").toLowerCase();
+  if (normalized.includes("razot")) {
+    return "manufacturing";
+  }
+  if (normalized.includes("tirdz")) {
+    return "retail";
+  }
+  return "office";
+}
+
+function resolveClientTypeForSource(fileName) {
+  const storedTypes = getStoredClientTypes();
+  return storedTypes[fileName] || inferClientTypeFromSource(fileName);
+}
+
+function saveClientTypeSelection() {
+  if (!state.bootstrap || !state.bootstrap.activeSource) {
+    return;
+  }
+
+  const storedTypes = getStoredClientTypes();
+  storedTypes[state.bootstrap.activeSource.fileName] = state.clientType;
+  setStoredClientTypes(storedTypes);
+}
+
+function applyClientTypeSelection(value) {
+  state.clientType = value || "office";
+  refs.clientTypeSelect.value = state.clientType;
+  refs.startupClientTypeSelect.value = state.clientType;
+}
+
+function inferSolarFromSource(fileName) {
+  return (fileName || "").toLowerCase().includes("ses");
+}
+
+function resolveSolarForSource(fileName) {
+  const storedSolarSelections = getStoredSolarSelections();
+  if (Object.prototype.hasOwnProperty.call(storedSolarSelections, fileName)) {
+    return storedSolarSelections[fileName] ? "yes" : "no";
+  }
+  if (state.bootstrap && state.bootstrap.activeSource && state.bootstrap.activeSource.fileName === fileName) {
+    return state.bootstrap.sourceHasSolar ? "yes" : "no";
+  }
+  return inferSolarFromSource(fileName) ? "yes" : "no";
+}
+
+function saveSolarSelection() {
+  if (!state.bootstrap || !state.bootstrap.activeSource) {
+    return;
+  }
+
+  const storedSolarSelections = getStoredSolarSelections();
+  storedSolarSelections[state.bootstrap.activeSource.fileName] = state.hasSolar;
+  setStoredSolarSelections(storedSolarSelections);
+}
+
+function applySolarSelection(value) {
+  const normalizedValue = value === "yes" ? "yes" : "no";
+  state.hasSolar = normalizedValue === "yes";
+  refs.solarSelect.value = normalizedValue;
+  refs.startupSolarSelect.value = normalizedValue;
+  refs.solarCapacityField.hidden = !state.hasSolar;
+  refs.solarCapacityInput.disabled = !state.hasSolar;
 }
 
 function renderGlobalSummary(bootstrap) {
@@ -370,7 +675,7 @@ function renderPortfolio(portfolio) {
 
 function renderDashboard(dashboard) {
   refs.objectHeading.textContent = `${dashboard.object.name} (${dashboard.object.id})`;
-  refs.objectSubheading.textContent = `Objekts ieņem ${dashboard.object.rankByAnnualCost}. vietu no ${dashboard.benchmark.portfolioSize} pēc gada izmaksām.`;
+  refs.objectSubheading.textContent = `Objekts ieņem ${dashboard.object.rankByAnnualCost}. vietu no ${dashboard.benchmark.portfolioSize} pēc gada izmaksām. Klienta profils: ${dashboard.clientTypeLabel}. ${dashboard.solarLabel}.`;
   refs.heroMeta.innerHTML = `
     <span>Patēriņa periods: ${escapeHtml(dashboard.period.consumptionStart)} - ${escapeHtml(dashboard.period.consumptionEnd)}</span>
     <span>Biržas cena: ${escapeHtml(dashboard.period.marketStart)} - ${escapeHtml(dashboard.period.marketEnd)}</span>
@@ -384,10 +689,12 @@ function renderDashboard(dashboard) {
   renderSignalLists(dashboard.priceSignals);
   renderBenchmark(dashboard.benchmark);
   renderSummaryCards(dashboard.cards);
+  renderSolarSummary(dashboard.solarSummary, dashboard.hasSolar);
   renderRecommendations(dashboard.recommendations);
   renderHourlyChart(refs.consumptionChart, dashboard.charts.consumptionHourly, "consumption", dashboard.priceSignals);
   renderHourlyChart(refs.priceChart, dashboard.charts.priceHourly, "price", dashboard.priceSignals);
   renderSpotComparisonChart(dashboard.charts.consumptionHourly, dashboard.charts.priceHourly);
+  renderSolarComparisonChart(dashboard.charts.solarComparison, dashboard.hasSolar);
   renderPlanChart(dashboard.planRows);
   renderPlanTable(dashboard.planRows);
   renderDailyTrend(dashboard.charts.dailyTrend);
@@ -445,6 +752,38 @@ function renderSummaryCards(cards) {
       `
     )
     .join("");
+}
+
+function renderSolarSummary(solarSummary, hasSolar) {
+  refs.solarSummarySection.hidden = !hasSolar;
+  refs.solarComparisonSection.hidden = !hasSolar;
+  if (!hasSolar) {
+    refs.solarSummaryCards.innerHTML = "";
+    refs.solarRecommendedHours.innerHTML = "";
+    refs.solarComparisonChart.innerHTML = "";
+    return;
+  }
+
+  refs.solarSummaryCards.innerHTML = solarSummary.cards
+    .map(
+      (card) => `
+        <article class="metric-card solar-metric-card">
+          <span class="metric-label">${escapeHtml(card.label)}</span>
+          <strong>${escapeHtml(numberFormat.format(card.value))} ${escapeHtml(card.unit)}</strong>
+          <small>${escapeHtml(card.note)}</small>
+        </article>
+      `
+    )
+    .join("");
+
+  refs.solarRecommendedHours.innerHTML = solarSummary.recommendedHours.length
+    ? solarSummary.recommendedHours
+        .map(
+          (item) =>
+            `<span class="signal-pill success">${escapeHtml(item.hour)}<strong>${escapeHtml(numberFormat.format(item.recommendedSelfUsePotential))} kWh</strong></span>`
+        )
+        .join("")
+    : '<span class="signal-pill">Nav noteiktu SES stundu</span>';
 }
 
 function renderRecommendations(recommendations) {
@@ -549,31 +888,96 @@ function renderSpotComparisonChart(consumptionItems, priceItems) {
     return;
   }
 
-  const consumptionMap = new Map(consumptionItems.map((item) => [item.hour, item.consumption]));
-  const maxConsumption = Math.max(...consumptionItems.map((item) => item.consumption), 1);
-  const maxPrice = Math.max(...priceItems.map((item) => item.price), 1);
-  const points = priceItems.map((priceItem, index) => {
-    const hour = priceItem.hour;
-    const consumption = consumptionMap.get(hour) ?? 0;
+  renderDualLineChart(refs.spotComparisonChart, {
+    primaryItems: consumptionItems,
+    secondaryItems: priceItems,
+    primaryValueKey: "consumption",
+    secondaryValueKey: "price",
+    primaryLabel: "Klienta patēriņš",
+    secondaryLabel: "SPOT cena",
+    secondaryUnit: "€/MWh",
+    secondaryLegendClass: "legend-price",
+    secondaryLineClass: "comparison-line-price",
+    secondaryDotClass: "comparison-dot-price",
+  });
+}
+
+function renderSolarComparisonChart(chartData, hasSolar) {
+  if (!hasSolar) {
+    refs.solarComparisonChart.innerHTML = "";
+    return;
+  }
+
+  const items = Array.isArray(chartData) ? chartData : chartData?.items;
+  const secondaryValueKey = Array.isArray(chartData) ? "export" : chartData?.secondaryValueKey || "export";
+  const secondaryLabel = Array.isArray(chartData) ? "SES eksports" : chartData?.secondaryLabel || "SES eksports";
+  const emptyMessage = Array.isArray(chartData)
+    ? "SES eksportam nav pieejamu stundu datu."
+    : chartData?.emptyMessage || "SES eksportam nav pieejamu stundu datu.";
+
+  refs.solarComparisonDescription.textContent =
+    secondaryValueKey === "forecastGeneration"
+      ? "Salīdzina objekta tipisko patēriņu ar prognozēto SES izstrādes līkni, kas aprēķināta no ievadītās SES jaudas."
+      : "Salīdzina objekta tipisko patēriņu ar SES eksporta profilu pa stundām.";
+
+  if (!Array.isArray(items) || items.length === 0 || items.every((item) => (item[secondaryValueKey] || 0) <= 0)) {
+    renderSingleChartState(refs.solarComparisonChart, "error", emptyMessage);
+    return;
+  }
+
+  renderDualLineChart(refs.solarComparisonChart, {
+    primaryItems: items,
+    secondaryItems: items,
+    primaryValueKey: "consumption",
+    secondaryValueKey,
+    primaryLabel: "Patēriņš",
+    secondaryLabel,
+    secondaryUnit: "kWh",
+    secondaryLegendClass: "legend-solar",
+    secondaryLineClass: "comparison-line-solar",
+    secondaryDotClass: "comparison-dot-solar",
+  });
+}
+
+function renderDualLineChart(container, config) {
+  const {
+    primaryItems,
+    secondaryItems,
+    primaryValueKey,
+    secondaryValueKey,
+    primaryLabel,
+    secondaryLabel,
+    secondaryUnit,
+    secondaryLegendClass,
+    secondaryLineClass,
+    secondaryDotClass,
+  } = config;
+
+  const primaryMap = new Map(primaryItems.map((item) => [item.hour, item[primaryValueKey]]));
+  const maxPrimary = Math.max(...primaryItems.map((item) => item[primaryValueKey]), 1);
+  const maxSecondary = Math.max(...secondaryItems.map((item) => item[secondaryValueKey]), 1);
+  const points = secondaryItems.map((secondaryItem, index) => {
+    const hour = secondaryItem.hour;
+    const primaryValue = primaryMap.get(hour) ?? 0;
+    const secondaryValue = secondaryItem[secondaryValueKey];
     const x = 36 + index * 46;
-    const consumptionY = 200 - Math.round((consumption / maxConsumption) * 150);
-    const priceY = 200 - Math.round((priceItem.price / maxPrice) * 150);
-    const anchorY = Math.round((consumptionY + priceY) / 2);
+    const primaryY = 200 - Math.round((primaryValue / maxPrimary) * 150);
+    const secondaryY = 200 - Math.round((secondaryValue / maxSecondary) * 150);
     return {
       hour,
-      consumption,
-      price: priceItem.price,
+      primaryValue,
+      secondaryValue,
       x,
-      consumptionY,
-      priceY,
-      anchorY,
+      primaryY,
+      secondaryY,
+      anchorY: Math.round((primaryY + secondaryY) / 2),
     };
   });
 
-  const consumptionPath = points.map((point) => `${point.x},${point.consumptionY}`).join(" ");
-  const pricePath = points.map((point) => `${point.x},${point.priceY}`).join(" ");
+  const primaryPath = points.map((point) => `${point.x},${point.primaryY}`).join(" ");
+  const secondaryPath = points.map((point) => `${point.x},${point.secondaryY}`).join(" ");
 
-  refs.spotComparisonChart.innerHTML = `
+  container.innerHTML = `
     <div class="comparison-wrapper">
       <svg class="comparison-svg" viewBox="0 0 1100 260" preserveAspectRatio="none" aria-hidden="true">
         <g class="comparison-grid">
@@ -583,13 +987,13 @@ function renderSpotComparisonChart(consumptionItems, priceItems) {
           <line x1="20" y1="150" x2="1080" y2="150"></line>
           <line x1="20" y1="190" x2="1080" y2="190"></line>
         </g>
-        <polyline class="comparison-line comparison-line-consumption" points="${consumptionPath}"></polyline>
-        <polyline class="comparison-line comparison-line-price" points="${pricePath}"></polyline>
+        <polyline class="comparison-line comparison-line-consumption" points="${primaryPath}"></polyline>
+        <polyline class="comparison-line ${secondaryLineClass}" points="${secondaryPath}"></polyline>
         ${points
           .map(
             (point) => `
-              <circle class="comparison-dot comparison-dot-consumption" cx="${point.x}" cy="${point.consumptionY}" r="5"></circle>
-              <circle class="comparison-dot comparison-dot-price" cx="${point.x}" cy="${point.priceY}" r="5"></circle>
+              <circle class="comparison-dot comparison-dot-consumption" cx="${point.x}" cy="${point.primaryY}" r="5"></circle>
+              <circle class="comparison-dot ${secondaryDotClass}" cx="${point.x}" cy="${point.secondaryY}" r="5"></circle>
             `
           )
           .join("")}
@@ -603,12 +1007,15 @@ function renderSpotComparisonChart(consumptionItems, priceItems) {
                 class="comparison-point"
                 style="left:${(point.x / 1100) * 100}%; top:${(point.anchorY / 260) * 100}%"
                 data-hour="${escapeHtml(point.hour)}"
-                data-consumption="${escapeHtml(numberFormat.format(point.consumption))}"
-                data-price="${escapeHtml(numberFormat.format(point.price))}"
+                data-primary-value="${escapeHtml(numberFormat.format(point.primaryValue))}"
+                data-secondary-value="${escapeHtml(numberFormat.format(point.secondaryValue))}"
+                data-primary-label="${escapeHtml(primaryLabel)}"
+                data-secondary-label="${escapeHtml(secondaryLabel)}"
+                data-secondary-unit="${escapeHtml(secondaryUnit)}"
                 data-x="${point.x}"
                 data-y="${point.anchorY}"
-                aria-label="${escapeHtml(point.hour)}: patēriņš ${escapeHtml(numberFormat.format(point.consumption))} kWh, SPOT cena ${escapeHtml(numberFormat.format(point.price))} €/MWh"
-                title="${escapeHtml(point.hour)} — ${escapeHtml(numberFormat.format(point.consumption))} kWh / ${escapeHtml(numberFormat.format(point.price))} €/MWh"
+                aria-label="${escapeHtml(point.hour)}: ${escapeHtml(primaryLabel)} ${escapeHtml(numberFormat.format(point.primaryValue))} kWh, ${escapeHtml(secondaryLabel)} ${escapeHtml(numberFormat.format(point.secondaryValue))} ${escapeHtml(secondaryUnit)}"
+                title="${escapeHtml(point.hour)} — ${escapeHtml(numberFormat.format(point.primaryValue))} kWh / ${escapeHtml(numberFormat.format(point.secondaryValue))} ${escapeHtml(secondaryUnit)}"
               ></button>
             `
           )
@@ -616,29 +1023,28 @@ function renderSpotComparisonChart(consumptionItems, priceItems) {
       </div>
       <div class="comparison-tooltip" aria-live="polite" hidden></div>
       <div class="comparison-axis">
-        ${points
-          .map(
-            (point) => `<span>${escapeHtml(point.hour.slice(0, 2))}</span>`
-          )
-          .join("")}
+        ${points.map((point) => `<span>${escapeHtml(point.hour.slice(0, 2))}</span>`).join("")}
       </div>
     </div>
     <div class="mini-legend">
-      <span><i class="legend-consumption"></i>Klienta patēriņš</span>
-      <span><i class="legend-price"></i>SPOT cena</span>
+      <span><i class="legend-consumption"></i>${escapeHtml(primaryLabel)}</span>
+      <span><i class="${secondaryLegendClass}"></i>${escapeHtml(secondaryLabel)}</span>
     </div>
   `;
 
-  const wrapper = refs.spotComparisonChart.querySelector(".comparison-wrapper");
-  const tooltip = refs.spotComparisonChart.querySelector(".comparison-tooltip");
+  const wrapper = container.querySelector(".comparison-wrapper");
+  const tooltip = container.querySelector(".comparison-tooltip");
   if (!wrapper || !tooltip) {
     return;
   }
 
   const showTooltip = (target) => {
     const hour = target.getAttribute("data-hour");
-    const consumption = target.getAttribute("data-consumption");
-    const price = target.getAttribute("data-price");
+    const primaryValue = target.getAttribute("data-primary-value");
+    const secondaryValue = target.getAttribute("data-secondary-value");
+    const primarySeriesLabel = target.getAttribute("data-primary-label");
+    const secondarySeriesLabel = target.getAttribute("data-secondary-label");
+    const secondarySeriesUnit = target.getAttribute("data-secondary-unit");
     const x = Number(target.getAttribute("data-x"));
     const y = Number(target.getAttribute("data-y"));
     let left;
@@ -656,8 +1062,8 @@ function renderSpotComparisonChart(consumptionItems, priceItems) {
 
     tooltip.innerHTML = `
       <strong>${escapeHtml(hour)}</strong>
-      <span>Patēriņš: ${escapeHtml(consumption)} kWh</span>
-      <span>SPOT cena: ${escapeHtml(price)} €/MWh</span>
+      <span>${escapeHtml(primarySeriesLabel)}: ${escapeHtml(primaryValue)} kWh</span>
+      <span>${escapeHtml(secondarySeriesLabel)}: ${escapeHtml(secondaryValue)} ${escapeHtml(secondarySeriesUnit)}</span>
     `;
     tooltip.hidden = false;
     tooltip.style.left = left;
@@ -752,13 +1158,13 @@ function renderAlerts(alerts) {
 }
 
 function renderChartLoadingState() {
-  [refs.consumptionChart, refs.priceChart, refs.spotComparisonChart, refs.dailyTrendChart].forEach((container) => {
+  [refs.consumptionChart, refs.priceChart, refs.spotComparisonChart, refs.solarComparisonChart, refs.dailyTrendChart].forEach((container) => {
     renderSingleChartState(container, "loading", "Grafiks tiek ielādēts...");
   });
 }
 
 function renderChartErrorState(message) {
-  [refs.consumptionChart, refs.priceChart, refs.spotComparisonChart, refs.dailyTrendChart].forEach((container) => {
+  [refs.consumptionChart, refs.priceChart, refs.spotComparisonChart, refs.solarComparisonChart, refs.dailyTrendChart].forEach((container) => {
     renderSingleChartState(container, "error", message);
   });
 }
@@ -779,8 +1185,8 @@ function setLoadingState(isLoading, message) {
   refs.refreshButton.disabled = isLoading;
 }
 
-async function fetchJson(url) {
-  const response = await fetch(url);
+async function fetchJson(url, options = undefined) {
+  const response = await fetch(url, options);
   if (!response.ok) {
     let message = `Pieprasījums neizdevās (${response.status})`;
     try {

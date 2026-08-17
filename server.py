@@ -1,6 +1,12 @@
 from flask import Flask, jsonify, request, send_from_directory
 
-from backend_service import BASE_DIR, get_bootstrap_data, get_dashboard_data, load_dataset
+from backend_service import (
+    BASE_DIR,
+    get_bootstrap_data,
+    get_dashboard_data,
+    load_dataset,
+    set_active_consumption_source,
+)
 
 
 app = Flask(__name__)
@@ -40,6 +46,21 @@ def health():
 
 @app.get("/api/bootstrap")
 def bootstrap():
+    return jsonify(get_bootstrap_data())
+
+
+@app.post("/api/source")
+def source():
+    payload = request.get_json(silent=True) or {}
+    file_name = payload.get("fileName")
+    if not file_name:
+        return jsonify({"error": "Missing required body field 'fileName'"}), 400
+
+    try:
+        set_active_consumption_source(file_name)
+    except KeyError as error:
+        return jsonify({"error": error.args[0]}), 404
+
     return jsonify(get_bootstrap_data())
 
 
