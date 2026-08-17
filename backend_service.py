@@ -1,6 +1,7 @@
 import json
 import math
 import os
+import re
 import subprocess
 import sys
 import urllib.error
@@ -84,9 +85,10 @@ DEFAULT_SOLAR_SHAPE = {
     "18:00": 0.1,
 }
 LOCAL_AI_BASE_URL = os.getenv("LOCAL_AI_BASE_URL", "http://127.0.0.1:11434").rstrip("/")
-LOCAL_AI_MODEL = os.getenv("LOCAL_AI_MODEL", "llama3.1:8b-instruct")
-LOCAL_AI_TIMEOUT_SECONDS_RAW = os.getenv("LOCAL_AI_TIMEOUT_SECONDS", "8")
+LOCAL_AI_MODEL = os.getenv("LOCAL_AI_MODEL", "llama3.1:8b")
+LOCAL_AI_TIMEOUT_SECONDS_RAW = os.getenv("LOCAL_AI_TIMEOUT_SECONDS", "180")
 LOCAL_AI_ENABLED = os.getenv("LOCAL_AI_ENABLED", "1").strip().lower() not in {"0", "false", "no"}
+AI_PROMPT_VERSION = "v2-business-lv"
 
 _DATA_CACHE = None
 _DATA_MTIME = None
@@ -164,9 +166,23 @@ def _extract_json_object(raw_text):
     return json.loads(stripped[start : end + 1])
 
 
+def _extract_summary_text(raw_text):
+    stripped = (raw_text or "").strip()
+    if not stripped:
+        return ""
+
+    summary_match = re.search(r'"summary"\s*:\s*"((?:[^"\\]|\\.)*)"', stripped)
+    if summary_match:
+        try:
+            return json.loads(f'"{summary_match.group(1)}"')
+        except json.JSONDecodeError:
+            return summary_match.group(1)
+    return stripped
+
+
 def _normalize_ai_priority(value):
     normalized = (value or "").strip().lower()
-    if normalized in {"high", "augsta", "augsts"}:
+    if normalized in {"high", "augsta", "augsts", "augsts.", "high priority"}:
         return "augsta"
     if normalized in {"medium", "mid", "vidēja", "videja"}:
         return "vidēja"
@@ -180,9 +196,18 @@ def _normalize_ai_actions(actions):
     for item in actions or []:
         if not isinstance(item, dict):
             continue
-        title = str(item.get("title") or "").strip()
+        title = str(item.get("title") or item.get("action") or "").strip()
         reason = str(item.get("reason") or item.get("description") or "").strip()
-        impact = str(item.get("impact") or item.get("metric") or "").strip()
+        if not reason:
+            responsibility = str(item.get("responsibility") or "").strip()
+            deadline = str(item.get("deadline") or "").strip()
+            reason_parts = []
+            if responsibility:
+                reason_parts.append(f"Atbildīgais: {responsibility}.")
+            if deadline:
+                reason_parts.append(f"Termiņš: {deadline}.")
+            reason = " ".join(reason_parts).strip()
+        impact = str(item.get("impact") or item.get("metric") or item.get("priority") or "").strip()
         if not title or not reason:
             continue
         normalized_actions.append(
@@ -197,14 +222,152 @@ def _normalize_ai_actions(actions):
     return normalized_actions
 
 
+def _normalize_ai_tomorrow_plan(items):
+    normalized_items = []
+    for item in items or []:
+        if not isinstance(item, dict):
+            continue
+        time = str(item.get("time") or item.get("window") or item.get("timing") or "").strip()
+        action = str(item.get("action") or item.get("title") or "").strip()
+        why = str(item.get("why") or item.get("reason") or item.get("note") or "").strip()
+        if not action:
+            continue
+        normalized_items.append(
+            {
+                "time": time[:40],
+                "action": action[:120],
+                "why": why[:220],
+            }
+        )
+        if len(normalized_items) >= 3:
+            break
+    return normalized_items
+
+
+def _clean_business_summary(text):
+    summary = " ".join((text or "").split())
+    replacements = {
+        "paterinājums": "patēriņš",
+        "paterins": "patēriņš",
+        "Sesija": "SES",
+        "sesija": "SES",
+        "portfela": "portfeļa",
+        "aktivizēta": "aktīvs",
+        "Elektrosabiedrības": "SES",
+        "paspaterinājums": "pašpatēriņš",
+        "paspaterins": "pašpatēriņš",
+    }
+    for source, target in replacements.items():
+        summary = summary.replace(source, target)
+    return summary[:320]
+
+
+def _display_object_name(name):
+    cleaned = str(name or "").strip()
+    if cleaned.isupper():
+        return cleaned.capitalize()
+    return cleaned
+
+
+def _select_business_summary(candidate, fallback):
+    cleaned = _clean_business_summary(candidate)
+    low_quality_markers = [
+        "enerģijas pārvaldības analīze parāda",
+        "energoefektīvuma pārbaude",
+        "klienta tipa",
+        "BIROJS",
+    ]
+    if not cleaned:
+        return fallback
+    if len(cleaned) < 90:
+        return fallback
+    if any(marker in cleaned for marker in low_quality_markers):
+        return fallback
+    return cleaned
+
+
+def _build_default_ai_summary(selected_object, insights, has_solar, recommended_hours):
+    object_name = _display_object_name(selected_object["name"])
+    savings = _fmt_number(insights["potentialSavings"], 1)
+    shiftable = _fmt_number(insights["shiftableEnergy"], 0)
+    anomaly_count = selected_object["summary"]["anomalyCount"]
+    summary = (
+        f"{object_name} tuvākā prioritāte ir pārcelt ap {shiftable} kWh elastīgās slodzes uz lētākajām stundām, "
+        f"lai sasniegtu aptuveni {savings} EUR dienas ietaupījumu."
+    )
+    if has_solar and recommended_hours:
+        summary += f" SES gadījumā fokusējies uz stundām {', '.join(recommended_hours[:2])}, lai palielinātu pašpatēriņu."
+    elif anomaly_count > 20:
+        summary += f" Papildu uzmanība jāpievērš {anomaly_count} anomālijām patēriņa profilā."
+    return summary[:320]
+
+
+def _build_default_ai_actions(insights, tomorrow_prices, has_solar, recommended_hours):
+    cheap_hours = [item["hour"] for item in tomorrow_prices["cheapestHours"][:3]]
+    expensive_hours = [item["hour"] for item in tomorrow_prices["expensiveHours"][:3]]
+    actions = [
+        {
+            "title": "Pārcel elastīgo slodzi uz lētajām stundām",
+            "reason": f"Primāri plāno elastīgos procesus stundās {', '.join(cheap_hours)} un izvairies no {', '.join(expensive_hours)}.",
+            "impact": f"{_fmt_number(insights['potentialSavings'], 1)} EUR/dienā",
+        },
+        {
+            "title": "Pārskati pieslēguma jaudas rezervi",
+            "reason": f"Aprēķins rāda iespēju samazināt slodzi par aptuveni {_fmt_number(insights['loadReductionKw'], 0)} kW bez būtiska riska.",
+            "impact": f"{_fmt_number(insights['loadReductionKw'], 0)} kW",
+        },
+    ]
+    if has_solar and recommended_hours:
+        actions.insert(
+            1,
+            {
+                "title": "Palielini SES pašpatēriņu",
+                "reason": f"Sinhronizē dienas procesus ar SES stundām {', '.join(recommended_hours[:3])}, lai mazinātu iepirkumu no tīkla.",
+                "impact": "SES pašpatēriņš",
+            },
+        )
+    return actions[:3]
+
+
+def _build_default_tomorrow_plan(tomorrow_prices, has_solar, recommended_hours):
+    cheap_hours = [item["hour"] for item in tomorrow_prices["cheapestHours"][:2]]
+    expensive_hours = [item["hour"] for item in tomorrow_prices["expensiveHours"][:2]]
+    plan = [
+        {
+            "time": "Rīts",
+            "action": "Sagatavo dienas elastīgos procesus",
+            "why": f"Jau no rīta saplāno, kuras slodzes pārcelt uz {', '.join(cheap_hours)}.",
+        },
+        {
+            "time": ", ".join(cheap_hours),
+            "action": "Palaid pārbīdāmo patēriņu",
+            "why": "Šajā logā ir zemākas biržas cenas un labāks izmaksu profils.",
+        },
+        {
+            "time": ", ".join(expensive_hours),
+            "action": "Samazini neobligāto slodzi",
+            "why": "Šajās stundās jāierobežo neobligātie procesi, lai mazinātu izmaksu pīķi.",
+        },
+    ]
+    if has_solar and recommended_hours:
+        plan[1] = {
+            "time": ", ".join(recommended_hours[:2]),
+            "action": "Sinhronizē slodzi ar SES izstrādi",
+            "why": "Dienas vidū var palielināt pašpatēriņu un samazināt tīkla iepirkumu.",
+        }
+    return plan
+
+
 def _build_ai_prompt(context):
     return (
         "Tu esi enerģijas pārvaldības AI konsultants Latvijā. "
-        "Analizē dotos aprēķinus un sagatavo īsu, praktisku rekomendāciju tikai no sniegtajiem datiem. "
+        "Analizē dotos aprēķinus un sagatavo īsu, biznesisku rekomendāciju tikai no sniegtajiem datiem. "
         "Neizdomā jaunus skaitļus. Ja dati nav pietiekami, to skaidri pasaki. "
         "Atbildi tikai JSON formātā ar struktūru: "
-        '{"summary":"...", "priority":"augsta|vidēja|zema", "actions":[{"title":"...", "reason":"...", "impact":"..."}]}. '
-        "Summary lai ir ne garāks par 500 rakstzīmēm. "
+        '{"summary":"...", "priority":"augsta|vidēja|zema", "actions":[{"title":"...", "reason":"...", "impact":"..."}], "tomorrowPlan":[{"time":"...", "action":"...", "why":"..."}]}. '
+        "Raksti gludā biznesa latviešu valodā. "
+        "Summary lai ir 2 īsi teikumi un ne garāks par 220 rakstzīmēm. "
+        "Izveido ne vairāk kā 3 actions un 3 tomorrowPlan ierakstus. "
         f"Dati: {json.dumps(context, ensure_ascii=False)}"
     )
 
@@ -218,6 +381,7 @@ def _call_local_ai(prompt):
             "format": "json",
             "options": {
                 "temperature": 0.2,
+                "num_predict": 220,
             },
         }
     ).encode("utf-8")
@@ -245,54 +409,36 @@ def _build_ai_consultant(selected_object, insights, inputs, tomorrow_prices, has
 
     solar_chart = solar_summary.get("chart", {})
     recommended_hours = [item["hour"] for item in solar_summary.get("recommendedHours", [])[:3]]
+    default_summary = _build_default_ai_summary(selected_object, insights, has_solar, recommended_hours)
+    default_actions = _build_default_ai_actions(insights, tomorrow_prices, has_solar, recommended_hours)
+    default_tomorrow_plan = _build_default_tomorrow_plan(tomorrow_prices, has_solar, recommended_hours)
     context = {
-        "object": {
-            "id": selected_object["id"],
-            "name": selected_object["name"],
-            "clientType": insights["clientTypeLabel"],
-            "portfolioRank": rank,
-            "portfolioSize": portfolio_size,
-        },
-        "energy": {
-            "annualConsumptionKwh": round(selected_object["summary"]["totalConsumption"], 1),
-            "annualCostEur": round(selected_object["summary"]["totalCost"], 0),
-            "peakHourlyConsumptionKwh": round(selected_object["summary"]["peakHourlyConsumption"], 1),
-            "averageDailyConsumptionKwh": round(selected_object["summary"]["averageDailyConsumption"], 1),
-            "anomalyCount": selected_object["summary"]["anomalyCount"],
-        },
-        "scenario": {
-            "shiftableEnergyKwh": insights["shiftableEnergy"],
-            "potentialSavingsEurPerDay": insights["potentialSavings"],
-            "loadReductionKw": insights["loadReductionKw"],
-            "loadReservePercent": insights["loadReservePercent"],
-            "installedEquipmentPowerKw": insights["installedPowerKw"],
-        },
-        "pricing": {
-            "averagePriceEurMwh": round(tomorrow_prices["averagePrice"], 2),
-            "cheapestHours": [item["hour"] for item in tomorrow_prices["cheapestHours"]],
-            "expensiveHours": [item["hour"] for item in tomorrow_prices["expensiveHours"]],
-        },
-        "solar": {
-            "enabled": has_solar,
-            "installedCapacityKw": inputs["solarCapacityKw"],
-            "averageDailyExportKwh": round(selected_object.get("solar", {}).get("averageDailyExport", 0), 1),
-            "selfUsePotentialKwh": solar_summary["cards"][2]["value"] if len(solar_summary.get("cards", [])) >= 3 else 0,
-            "comparisonSeries": solar_chart.get("secondaryLabel"),
-            "recommendedHours": recommended_hours,
-        },
-        "existingRecommendations": [
-            {
-                "title": item["title"],
-                "metric": item["metric"],
-            }
-            for item in insights["recommendations"][:4]
-        ],
+        "prompt_version": AI_PROMPT_VERSION,
+        "objekts": f"{selected_object['name']} ({selected_object['id']})",
+        "klienta_tips": insights["clientTypeLabel"],
+        "portfela_vieta": f"{rank}/{portfolio_size}",
+        "gada_paterins_kwh": round(selected_object["summary"]["totalConsumption"], 0),
+        "gada_izmaksas_eur": round(selected_object["summary"]["totalCost"], 0),
+        "stundas_pikis_kwh": round(selected_object["summary"]["peakHourlyConsumption"], 1),
+        "anomālijas": selected_object["summary"]["anomalyCount"],
+        "ietaupijums_eur_diena": insights["potentialSavings"],
+        "parbidama_slodze_kwh": insights["shiftableEnergy"],
+        "slodzes_samazinajums_kw": insights["loadReductionKw"],
+        "letakas_stundas": [item["hour"] for item in tomorrow_prices["cheapestHours"][:3]],
+        "dargakas_stundas": [item["hour"] for item in tomorrow_prices["expensiveHours"][:3]],
+        "ses_aktivs": has_solar,
+        "ses_jauda_kw": inputs["solarCapacityKw"],
+        "ses_eksports_kwh_diena": round(selected_object.get("solar", {}).get("averageDailyExport", 0), 1),
+        "ses_paspaterins_kwh_diena": solar_summary["cards"][2]["value"] if len(solar_summary.get("cards", [])) >= 3 else 0,
+        "ses_stundas": recommended_hours,
+        "esošie_ieteikumi": [item["title"] for item in insights["recommendations"][:3]],
     }
     cache_key = json.dumps(context, ensure_ascii=False, sort_keys=True)
     cached = _AI_CACHE.get(cache_key)
     if cached is not None:
         return cached
 
+    raw_response = None
     try:
         raw_response = _call_local_ai(_build_ai_prompt(context))
         parsed = _extract_json_object(raw_response.get("response", ""))
@@ -301,8 +447,9 @@ def _build_ai_consultant(selected_object, insights, inputs, tomorrow_prices, has
             "provider": "local-ollama",
             "model": LOCAL_AI_MODEL,
             "headline": "AI konsultanta kopsavilkums",
-            "summary": str(parsed.get("summary") or "").strip()[:500] or "AI konsultants neatgrieza kopsavilkumu.",
-            "actions": _normalize_ai_actions(parsed.get("actions")),
+            "summary": _select_business_summary(str(parsed.get("summary") or "").strip(), default_summary),
+            "actions": _normalize_ai_actions(parsed.get("actions")) or default_actions,
+            "tomorrowPlan": _normalize_ai_tomorrow_plan(parsed.get("tomorrowPlan")) or default_tomorrow_plan,
             "priority": _normalize_ai_priority(parsed.get("priority")),
         }
     except urllib.error.URLError:
@@ -315,20 +462,49 @@ def _build_ai_consultant(selected_object, insights, inputs, tomorrow_prices, has
                 f"Lai ģenerētu dinamiskus AI ieteikumus, palaid lokālu Ollama servisu uz {LOCAL_AI_BASE_URL} "
                 f"ar modeli '{LOCAL_AI_MODEL}'. Šobrīd panelis rāda klasiskos aprēķinu ieteikumus."
             ),
-            "actions": [],
+            "actions": default_actions,
+            "tomorrowPlan": default_tomorrow_plan,
             "priority": "vidēja",
         }
-    except (TimeoutError, json.JSONDecodeError, ValueError):
+    except (json.JSONDecodeError, ValueError):
+        raw_text = str((raw_response or {}).get("response") or "").strip()
+        if raw_text:
+            result = {
+                "status": "ready",
+                "provider": "local-ollama",
+                "model": LOCAL_AI_MODEL,
+                "headline": "AI konsultanta kopsavilkums",
+                "summary": _select_business_summary(_extract_summary_text(raw_text), default_summary),
+                "actions": default_actions,
+                "tomorrowPlan": default_tomorrow_plan,
+                "priority": "vidēja",
+            }
+        else:
+            result = {
+                "status": "error",
+                "provider": "local-ollama",
+                "model": LOCAL_AI_MODEL,
+                "headline": "AI konsultants neatbildēja korekti",
+                "summary": (
+                    "Lokālais AI modelis neatgrieza izmantojamu atbildi JSON formātā. "
+                    "Pārbaudi, vai modelis ir ielādēts un spēj atbildēt strukturētā formā."
+                ),
+                "actions": default_actions,
+                "tomorrowPlan": default_tomorrow_plan,
+                "priority": "vidēja",
+            }
+    except TimeoutError:
         result = {
-            "status": "error",
+            "status": "unavailable",
             "provider": "local-ollama",
             "model": LOCAL_AI_MODEL,
-            "headline": "AI konsultants neatbildēja korekti",
+            "headline": "AI konsultants atbild pārāk ilgi",
             "summary": (
-                "Lokālais AI modelis neatgrieza izmantojamu atbildi JSON formātā. "
-                "Pārbaudi, vai modelis ir ielādēts un spēj atbildēt strukturētā formā."
+                "Lokālais AI modelis šim datoram atbild pārāk lēni. "
+                "Panelis turpina rādīt klasiskos aprēķinu ieteikumus, kamēr AI atbilde nav pieejama laikā."
             ),
-            "actions": [],
+            "actions": default_actions,
+            "tomorrowPlan": default_tomorrow_plan,
             "priority": "vidēja",
         }
 

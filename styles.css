@@ -652,6 +652,7 @@ thead th {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
   gap: 14px;
+  margin-bottom: 18px;
 }
 
 .ai-action-card {
@@ -671,6 +672,55 @@ thead th {
   border-radius: var(--radius-md);
   background: rgba(255, 255, 255, 0.44);
   border: 1px dashed rgba(18, 45, 83, 0.18);
+}
+
+.ai-tomorrow-plan {
+  padding-top: 4px;
+}
+
+.ai-tomorrow-head {
+  margin-bottom: 10px;
+}
+
+.ai-tomorrow-head h3 {
+  margin-bottom: 6px;
+}
+
+.ai-tomorrow-list {
+  display: grid;
+  gap: 12px;
+}
+
+.ai-tomorrow-item {
+  display: grid;
+  grid-template-columns: 130px 1fr;
+  gap: 14px;
+  padding: 16px 18px;
+  border-radius: var(--radius-lg);
+  background: rgba(255, 255, 255, 0.54);
+  border: 1px solid rgba(18, 45, 83, 0.12);
+}
+
+.ai-tomorrow-time {
+  display: inline-flex;
+  align-self: flex-start;
+  justify-content: center;
+  padding: 8px 12px;
+  border-radius: 999px;
+  background: rgba(47, 110, 234, 0.1);
+  color: #214d9d;
+  font-weight: 700;
+}
+
+.ai-tomorrow-copy strong {
+  display: block;
+  margin-bottom: 6px;
+}
+
+.ai-tomorrow-copy p {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.5;
 }
 
 .recommendation.success {

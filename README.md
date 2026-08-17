@@ -54,13 +54,13 @@
 Lai panelī parādītos pilnīgi automātiskais AI konsultants, palaid lokālu [Ollama](https://ollama.com/) servisu un modeli, piemēram:
 
 ```powershell
-ollama run llama3.1:8b-instruct
+ollama run llama3.1:8b
 ```
 
 Pēc noklusējuma aplikācija mēģina sasniegt:
 
 - `LOCAL_AI_BASE_URL=http://127.0.0.1:11434`
-- `LOCAL_AI_MODEL=llama3.1:8b-instruct`
+- `LOCAL_AI_MODEL=llama3.1:8b`
 
 Ja lokālais modelis nav pieejams, aplikācija turpina strādāt ar aprēķinu bāzētajiem ieteikumiem un AI panelī parāda statusu, ka lokālais AI nav sasniedzams.
 

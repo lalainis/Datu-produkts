@@ -51,6 +51,7 @@ const refs = {
   aiConsultantStatus: document.getElementById("aiConsultantStatus"),
   aiConsultantSummary: document.getElementById("aiConsultantSummary"),
   aiConsultantActions: document.getElementById("aiConsultantActions"),
+  aiTomorrowPlan: document.getElementById("aiTomorrowPlan"),
   recommendations: document.getElementById("recommendations"),
   consumptionChart: document.getElementById("consumptionChart"),
   priceChart: document.getElementById("priceChart"),
@@ -813,6 +814,7 @@ function renderAiConsultant(aiConsultant) {
     refs.aiConsultantStatus.className = "ai-status-chip warning";
     refs.aiConsultantSummary.textContent = "AI konsultanta dati nav pieejami.";
     refs.aiConsultantActions.innerHTML = "";
+    refs.aiTomorrowPlan.innerHTML = "";
     return;
   }
 
@@ -850,6 +852,21 @@ function renderAiConsultant(aiConsultant) {
         )
         .join("")
     : '<div class="ai-empty-state">AI konsultants šobrīd neiedeva papildu darbību sarakstu.</div>';
+  refs.aiTomorrowPlan.innerHTML = (aiConsultant.tomorrowPlan || []).length
+    ? aiConsultant.tomorrowPlan
+        .map(
+          (item) => `
+            <article class="ai-tomorrow-item">
+              <span class="ai-tomorrow-time">${escapeHtml(item.time || "Rīt")}</span>
+              <div class="ai-tomorrow-copy">
+                <strong>${escapeHtml(item.action)}</strong>
+                <p>${escapeHtml(item.why || "")}</p>
+              </div>
+            </article>
+          `
+        )
+        .join("")
+    : '<div class="ai-empty-state">Rītdienas plāns šobrīd nav pieejams.</div>';
 }
 
 function renderHourlyChart(container, items, mode, signals) {
