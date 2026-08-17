@@ -29,7 +29,7 @@ def script():
 
 @app.get("/logo.png")
 def logo():
-    return send_from_directory(BASE_DIR, "Elektrum_Business_Logo_RGB_White.png")
+    return send_from_directory(BASE_DIR, "Elektrum_Business_Logo_RGB_Black.png")
 
 
 @app.get("/api/health")

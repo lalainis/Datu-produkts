@@ -51,7 +51,7 @@ body.modal-open {
 }
 
 .app-shell.is-locked {
-  opacity: 0.08;
+  opacity: 0.32;
   pointer-events: none;
   user-select: none;
 }
@@ -135,7 +135,7 @@ body.modal-open {
   min-height: 42px;
   padding: 6px 10px;
   border-radius: 12px;
-  background: rgba(17, 35, 62, 0.04);
+  background: #ffffff;
   border: 1px solid rgba(17, 35, 62, 0.08);
 }
 
@@ -144,7 +144,7 @@ body.modal-open {
   max-height: 28px;
   width: auto;
   object-fit: contain;
-  filter: brightness(0.9);
+  filter: none;
 }
 
 .eyebrow {

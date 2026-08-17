@@ -49,6 +49,12 @@
    http://127.0.0.1:8010
    ```
 
+5. Palaiž testus:
+
+   ```powershell
+   python -m unittest discover -s tests -p "test_*.py" -v
+   ```
+
 ## Lokālais AI konsultants
 
 Lai panelī parādītos pilnīgi automātiskais AI konsultants, palaid lokālu [Ollama](https://ollama.com/) servisu un modeli, piemēram:
@@ -72,6 +78,7 @@ Ja lokālais modelis nav pieejams, aplikācija turpina strādāt ar aprēķinu b
 - `server.py` - backend entrypoint
 - `backend_service.py` - aprēķinu un datu sagatavošanas loģika
 - `scripts/generate_data.py` - Excel datu pārveide uz `data/app-data.json`
+- `tests/test_backend.py` - backend palīgu un Flask API testi
 
 ## API endpointi
 
