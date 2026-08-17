@@ -47,6 +47,10 @@ const refs = {
   solarSummarySection: document.getElementById("solarSummarySection"),
   solarSummaryCards: document.getElementById("solarSummaryCards"),
   solarRecommendedHours: document.getElementById("solarRecommendedHours"),
+  aiConsultantSection: document.getElementById("aiConsultantSection"),
+  aiConsultantStatus: document.getElementById("aiConsultantStatus"),
+  aiConsultantSummary: document.getElementById("aiConsultantSummary"),
+  aiConsultantActions: document.getElementById("aiConsultantActions"),
   recommendations: document.getElementById("recommendations"),
   consumptionChart: document.getElementById("consumptionChart"),
   priceChart: document.getElementById("priceChart"),
@@ -690,6 +694,7 @@ function renderDashboard(dashboard) {
   renderBenchmark(dashboard.benchmark);
   renderSummaryCards(dashboard.cards);
   renderSolarSummary(dashboard.solarSummary, dashboard.hasSolar);
+  renderAiConsultant(dashboard.aiConsultant);
   renderRecommendations(dashboard.recommendations);
   renderHourlyChart(refs.consumptionChart, dashboard.charts.consumptionHourly, "consumption", dashboard.priceSignals);
   renderHourlyChart(refs.priceChart, dashboard.charts.priceHourly, "price", dashboard.priceSignals);
@@ -800,6 +805,51 @@ function renderRecommendations(recommendations) {
       `
     )
     .join("");
+}
+
+function renderAiConsultant(aiConsultant) {
+  if (!aiConsultant) {
+    refs.aiConsultantStatus.textContent = "Nav datu";
+    refs.aiConsultantStatus.className = "ai-status-chip warning";
+    refs.aiConsultantSummary.textContent = "AI konsultanta dati nav pieejami.";
+    refs.aiConsultantActions.innerHTML = "";
+    return;
+  }
+
+  const toneMap = {
+    ready: "success",
+    unavailable: "warning",
+    disabled: "warning",
+    error: "danger",
+  };
+  const tone = toneMap[aiConsultant.status] || "warning";
+  const statusLabel =
+    aiConsultant.status === "ready"
+      ? `Aktīvs · ${aiConsultant.model}`
+      : aiConsultant.status === "disabled"
+      ? "Izslēgts"
+      : aiConsultant.status === "error"
+      ? "Kļūda"
+      : "Nav pieejams";
+
+  refs.aiConsultantStatus.textContent = statusLabel;
+  refs.aiConsultantStatus.className = `ai-status-chip ${tone}`;
+  refs.aiConsultantSummary.textContent = aiConsultant.summary || "AI konsultants neatgrieza kopsavilkumu.";
+  refs.aiConsultantActions.innerHTML = (aiConsultant.actions || []).length
+    ? aiConsultant.actions
+        .map(
+          (action) => `
+            <article class="ai-action-card">
+              <div class="recommendation-top">
+                <h3>${escapeHtml(action.title)}</h3>
+                <span class="recommendation-metric">${escapeHtml(action.impact || aiConsultant.priority || "")}</span>
+              </div>
+              <p>${escapeHtml(action.reason)}</p>
+            </article>
+          `
+        )
+        .join("")
+    : '<div class="ai-empty-state">AI konsultants šobrīd neiedeva papildu darbību sarakstu.</div>';
 }
 
 function renderHourlyChart(container, items, mode, signals) {

@@ -610,6 +610,69 @@ thead th {
   margin-top: 16px;
 }
 
+.ai-panel {
+  background: linear-gradient(180deg, rgba(82, 111, 255, 0.06), rgba(255, 255, 255, 0.86));
+}
+
+.ai-status-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 8px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--text);
+  background: rgba(255, 255, 255, 0.7);
+}
+
+.ai-status-chip.success {
+  color: #0d6a4c;
+  background: rgba(26, 169, 122, 0.12);
+}
+
+.ai-status-chip.warning {
+  color: #8f6505;
+  background: rgba(224, 163, 46, 0.12);
+}
+
+.ai-status-chip.danger {
+  color: #a23446;
+  background: rgba(220, 88, 104, 0.12);
+}
+
+.ai-consultant-summary {
+  margin: 0 0 16px;
+  color: var(--text);
+  line-height: 1.6;
+  font-weight: 500;
+}
+
+.ai-consultant-actions {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 14px;
+}
+
+.ai-action-card {
+  padding: 18px;
+  border-radius: var(--radius-lg);
+  background: rgba(255, 255, 255, 0.5);
+  border: 1px solid rgba(47, 110, 234, 0.12);
+}
+
+.ai-action-card p,
+.ai-empty-state {
+  color: var(--muted);
+}
+
+.ai-empty-state {
+  padding: 14px 16px;
+  border-radius: var(--radius-md);
+  background: rgba(255, 255, 255, 0.44);
+  border: 1px dashed rgba(18, 45, 83, 0.18);
+}
+
 .recommendation.success {
   background: rgba(58, 210, 159, 0.09);
 }

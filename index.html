@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Enerģijas patēriņa optimizācijas panelis</title>
-  <link rel="stylesheet" href="styles.css?v=20260817-4">
+  <link rel="stylesheet" href="styles.css?v=20260817-5">
 </head>
 <body>
   <div class="startup-dialog-backdrop" id="startupDialogBackdrop">
@@ -204,6 +204,18 @@
           <div class="signal-list solar-hours-list" id="solarRecommendedHours"></div>
         </section>
 
+        <section class="panel ai-panel" id="aiConsultantSection">
+          <div class="panel-title-row">
+            <div>
+              <h2>AI konsultants</h2>
+              <p>Lokāls AI slānis, kas interpretē aprēķinus un ģenerē dinamiskus ieteikumus.</p>
+            </div>
+            <span class="ai-status-chip" id="aiConsultantStatus">Pārbauda</span>
+          </div>
+          <p class="ai-consultant-summary" id="aiConsultantSummary"></p>
+          <div class="ai-consultant-actions" id="aiConsultantActions"></div>
+        </section>
+
         <section class="panel">
           <div class="panel-title-row">
             <div>
@@ -316,6 +328,6 @@
     </main>
   </div>
 
-  <script src="app.js?v=20260817-4" defer></script>
+  <script src="app.js?v=20260817-5" defer></script>
 </body>
 </html>

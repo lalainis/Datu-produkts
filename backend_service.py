@@ -1,7 +1,10 @@
 import json
 import math
+import os
 import subprocess
 import sys
+import urllib.error
+import urllib.request
 from pathlib import Path
 
 
@@ -80,9 +83,14 @@ DEFAULT_SOLAR_SHAPE = {
     "17:00": 0.22,
     "18:00": 0.1,
 }
+LOCAL_AI_BASE_URL = os.getenv("LOCAL_AI_BASE_URL", "http://127.0.0.1:11434").rstrip("/")
+LOCAL_AI_MODEL = os.getenv("LOCAL_AI_MODEL", "llama3.1:8b-instruct")
+LOCAL_AI_TIMEOUT_SECONDS_RAW = os.getenv("LOCAL_AI_TIMEOUT_SECONDS", "8")
+LOCAL_AI_ENABLED = os.getenv("LOCAL_AI_ENABLED", "1").strip().lower() not in {"0", "false", "no"}
 
 _DATA_CACHE = None
 _DATA_MTIME = None
+_AI_CACHE = {}
 
 
 def _parse_number(value):
@@ -91,6 +99,9 @@ def _parse_number(value):
     except (TypeError, ValueError):
         return 0.0
     return parsed if math.isfinite(parsed) and parsed > 0 else 0.0
+
+
+LOCAL_AI_TIMEOUT_SECONDS = max(_parse_number(LOCAL_AI_TIMEOUT_SECONDS_RAW), 1.0)
 
 
 def _round_currency(value):
@@ -133,6 +144,198 @@ def _average_consumption_for_hours(hourly_map, hours):
         return 0.0
     values = [hourly_map.get(hour, 0) for hour in hours]
     return round(sum(values) / len(values), 2)
+
+
+def _extract_json_object(raw_text):
+    stripped = (raw_text or "").strip()
+    if not stripped:
+        raise ValueError("Empty AI response")
+
+    try:
+        return json.loads(stripped)
+    except json.JSONDecodeError:
+        pass
+
+    start = stripped.find("{")
+    end = stripped.rfind("}")
+    if start == -1 or end == -1 or end <= start:
+        raise ValueError("AI response does not contain JSON")
+
+    return json.loads(stripped[start : end + 1])
+
+
+def _normalize_ai_priority(value):
+    normalized = (value or "").strip().lower()
+    if normalized in {"high", "augsta", "augsts"}:
+        return "augsta"
+    if normalized in {"medium", "mid", "vidēja", "videja"}:
+        return "vidēja"
+    if normalized in {"low", "zema", "zems"}:
+        return "zema"
+    return "vidēja"
+
+
+def _normalize_ai_actions(actions):
+    normalized_actions = []
+    for item in actions or []:
+        if not isinstance(item, dict):
+            continue
+        title = str(item.get("title") or "").strip()
+        reason = str(item.get("reason") or item.get("description") or "").strip()
+        impact = str(item.get("impact") or item.get("metric") or "").strip()
+        if not title or not reason:
+            continue
+        normalized_actions.append(
+            {
+                "title": title[:120],
+                "reason": reason[:320],
+                "impact": impact[:80],
+            }
+        )
+        if len(normalized_actions) >= 4:
+            break
+    return normalized_actions
+
+
+def _build_ai_prompt(context):
+    return (
+        "Tu esi enerģijas pārvaldības AI konsultants Latvijā. "
+        "Analizē dotos aprēķinus un sagatavo īsu, praktisku rekomendāciju tikai no sniegtajiem datiem. "
+        "Neizdomā jaunus skaitļus. Ja dati nav pietiekami, to skaidri pasaki. "
+        "Atbildi tikai JSON formātā ar struktūru: "
+        '{"summary":"...", "priority":"augsta|vidēja|zema", "actions":[{"title":"...", "reason":"...", "impact":"..."}]}. '
+        "Summary lai ir ne garāks par 500 rakstzīmēm. "
+        f"Dati: {json.dumps(context, ensure_ascii=False)}"
+    )
+
+
+def _call_local_ai(prompt):
+    payload = json.dumps(
+        {
+            "model": LOCAL_AI_MODEL,
+            "prompt": prompt,
+            "stream": False,
+            "format": "json",
+            "options": {
+                "temperature": 0.2,
+            },
+        }
+    ).encode("utf-8")
+    request = urllib.request.Request(
+        f"{LOCAL_AI_BASE_URL}/api/generate",
+        data=payload,
+        headers={"Content-Type": "application/json"},
+        method="POST",
+    )
+    with urllib.request.urlopen(request, timeout=LOCAL_AI_TIMEOUT_SECONDS) as response:
+        return json.loads(response.read().decode("utf-8"))
+
+
+def _build_ai_consultant(selected_object, insights, inputs, tomorrow_prices, has_solar, solar_summary, rank, portfolio_size):
+    if not LOCAL_AI_ENABLED:
+        return {
+            "status": "disabled",
+            "provider": "local-ollama",
+            "model": LOCAL_AI_MODEL,
+            "headline": "AI konsultants ir izslēgts",
+            "summary": "Lai aktivizētu dinamisku AI konsultantu, iestati LOCAL_AI_ENABLED=1 un palaid lokālu Ollama modeli.",
+            "actions": [],
+            "priority": "vidēja",
+        }
+
+    solar_chart = solar_summary.get("chart", {})
+    recommended_hours = [item["hour"] for item in solar_summary.get("recommendedHours", [])[:3]]
+    context = {
+        "object": {
+            "id": selected_object["id"],
+            "name": selected_object["name"],
+            "clientType": insights["clientTypeLabel"],
+            "portfolioRank": rank,
+            "portfolioSize": portfolio_size,
+        },
+        "energy": {
+            "annualConsumptionKwh": round(selected_object["summary"]["totalConsumption"], 1),
+            "annualCostEur": round(selected_object["summary"]["totalCost"], 0),
+            "peakHourlyConsumptionKwh": round(selected_object["summary"]["peakHourlyConsumption"], 1),
+            "averageDailyConsumptionKwh": round(selected_object["summary"]["averageDailyConsumption"], 1),
+            "anomalyCount": selected_object["summary"]["anomalyCount"],
+        },
+        "scenario": {
+            "shiftableEnergyKwh": insights["shiftableEnergy"],
+            "potentialSavingsEurPerDay": insights["potentialSavings"],
+            "loadReductionKw": insights["loadReductionKw"],
+            "loadReservePercent": insights["loadReservePercent"],
+            "installedEquipmentPowerKw": insights["installedPowerKw"],
+        },
+        "pricing": {
+            "averagePriceEurMwh": round(tomorrow_prices["averagePrice"], 2),
+            "cheapestHours": [item["hour"] for item in tomorrow_prices["cheapestHours"]],
+            "expensiveHours": [item["hour"] for item in tomorrow_prices["expensiveHours"]],
+        },
+        "solar": {
+            "enabled": has_solar,
+            "installedCapacityKw": inputs["solarCapacityKw"],
+            "averageDailyExportKwh": round(selected_object.get("solar", {}).get("averageDailyExport", 0), 1),
+            "selfUsePotentialKwh": solar_summary["cards"][2]["value"] if len(solar_summary.get("cards", [])) >= 3 else 0,
+            "comparisonSeries": solar_chart.get("secondaryLabel"),
+            "recommendedHours": recommended_hours,
+        },
+        "existingRecommendations": [
+            {
+                "title": item["title"],
+                "metric": item["metric"],
+            }
+            for item in insights["recommendations"][:4]
+        ],
+    }
+    cache_key = json.dumps(context, ensure_ascii=False, sort_keys=True)
+    cached = _AI_CACHE.get(cache_key)
+    if cached is not None:
+        return cached
+
+    try:
+        raw_response = _call_local_ai(_build_ai_prompt(context))
+        parsed = _extract_json_object(raw_response.get("response", ""))
+        result = {
+            "status": "ready",
+            "provider": "local-ollama",
+            "model": LOCAL_AI_MODEL,
+            "headline": "AI konsultanta kopsavilkums",
+            "summary": str(parsed.get("summary") or "").strip()[:500] or "AI konsultants neatgrieza kopsavilkumu.",
+            "actions": _normalize_ai_actions(parsed.get("actions")),
+            "priority": _normalize_ai_priority(parsed.get("priority")),
+        }
+    except urllib.error.URLError:
+        result = {
+            "status": "unavailable",
+            "provider": "local-ollama",
+            "model": LOCAL_AI_MODEL,
+            "headline": "AI konsultants nav pieejams",
+            "summary": (
+                f"Lai ģenerētu dinamiskus AI ieteikumus, palaid lokālu Ollama servisu uz {LOCAL_AI_BASE_URL} "
+                f"ar modeli '{LOCAL_AI_MODEL}'. Šobrīd panelis rāda klasiskos aprēķinu ieteikumus."
+            ),
+            "actions": [],
+            "priority": "vidēja",
+        }
+    except (TimeoutError, json.JSONDecodeError, ValueError):
+        result = {
+            "status": "error",
+            "provider": "local-ollama",
+            "model": LOCAL_AI_MODEL,
+            "headline": "AI konsultants neatbildēja korekti",
+            "summary": (
+                "Lokālais AI modelis neatgrieza izmantojamu atbildi JSON formātā. "
+                "Pārbaudi, vai modelis ir ielādēts un spēj atbildēt strukturētā formā."
+            ),
+            "actions": [],
+            "priority": "vidēja",
+        }
+
+    _AI_CACHE[cache_key] = result
+    if len(_AI_CACHE) > 64:
+        _AI_CACHE.pop(next(iter(_AI_CACHE)))
+    return result
 
 
 def _build_forecast_generation_map(hours, export_map, solar_capacity_kw):
@@ -743,6 +946,16 @@ def get_dashboard_data(object_id, query_args):
     rank = next((index + 1 for index, item in enumerate(portfolio) if item["id"] == object_id), None)
     plan_rows = _plan_rows(selected_object, data["tomorrowPrices"])
     solar_summary = _build_solar_summary(selected_object, insights, has_solar)
+    ai_consultant = _build_ai_consultant(
+        selected_object,
+        insights,
+        inputs,
+        data["tomorrowPrices"],
+        has_solar,
+        solar_summary,
+        rank,
+        len(portfolio),
+    )
 
     return {
         "generatedAt": data["generatedAt"],
@@ -775,6 +988,7 @@ def get_dashboard_data(object_id, query_args):
             "expensiveHours": data["tomorrowPrices"]["expensiveHours"],
         },
         "recommendations": insights["recommendations"],
+        "aiConsultant": ai_consultant,
         "charts": {
             "consumptionHourly": selected_object["hourlyProfile"],
             "priceHourly": data["tomorrowPrices"]["hourly"],
