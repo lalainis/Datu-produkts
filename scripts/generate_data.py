@@ -9,7 +9,7 @@ import openpyxl
 
 
 BASE_DIR = Path(__file__).resolve().parent.parent
-CONSUMPTION_FILE = BASE_DIR / "Dati_prototipesanai.xlsx"
+CONSUMPTION_FILE = BASE_DIR / "ofisu komplekss.xlsx"
 PRICE_FILE = BASE_DIR / "NP_Cenas_LV.xlsx"
 OUTPUT_FILE = BASE_DIR / "data" / "app-data.json"
 

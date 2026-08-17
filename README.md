@@ -3,7 +3,7 @@
 Šī ir web aplikācija ar Python backend un interaktīvu dashboard frontend, kas izmanto:
 
 - [Promt.docx](./Promt.docx) prasības
-- [Dati_prototipesanai.xlsx](./Dati_prototipesanai.xlsx) vēsturiskā patēriņa datus
+- [ofisu komplekss.xlsx](./ofisu%20komplekss.xlsx) vēsturiskā patēriņa datus
 - [NP_Cenas_LV.xlsx](./NP_Cenas_LV.xlsx) Nord Pool cenu datus
 
 ## Ko rāda aplikācija

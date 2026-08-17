@@ -8,7 +8,7 @@ from pathlib import Path
 BASE_DIR = Path(__file__).resolve().parent
 DATA_FILE = BASE_DIR / "data" / "app-data.json"
 SOURCE_FILES = [
-    BASE_DIR / "Dati_prototipesanai.xlsx",
+    BASE_DIR / "ofisu komplekss.xlsx",
     BASE_DIR / "NP_Cenas_LV.xlsx",
     BASE_DIR / "scripts" / "generate_data.py",
 ]
