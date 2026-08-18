@@ -2,6 +2,7 @@ import unittest
 from unittest.mock import patch
 
 import backend_service
+import ai_consultant
 from scripts.generate_data import hour_label, percentile, price_hour_label
 from server import app
 
@@ -75,7 +76,7 @@ class BackendApiTestCase(unittest.TestCase):
         bootstrap = self.client.get("/api/bootstrap").get_json()
         object_id = bootstrap["defaultObjectId"]
 
-        with patch.object(backend_service, "LOCAL_AI_ENABLED", False):
+        with patch.object(ai_consultant, "LOCAL_AI_ENABLED", False):
             response = self.client.get(
                 "/api/dashboard",
                 query_string={

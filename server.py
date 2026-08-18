@@ -1,9 +1,8 @@
 from flask import Flask, jsonify, request, send_from_directory
 
-from backend_service import (
+from backend_service import get_bootstrap_data, get_dashboard_data
+from data_loader import (
     BASE_DIR,
-    get_bootstrap_data,
-    get_dashboard_data,
     load_dataset,
     set_active_consumption_source,
 )
