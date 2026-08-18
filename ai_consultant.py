@@ -117,8 +117,17 @@ def _normalize_ai_tomorrow_plan(items):
     return normalized_items
 
 
-def _build_ai_prompt(context):
-    """Build AI prompt from context dict."""
+def _build_ai_prompt(context, simplified=False):
+    """Build AI prompt from context dict. Use simplified=True for fallback retry."""
+    if simplified:
+        return (
+            "Enerģijas konsultants. Analizē enerģijas datus un atbild tikai JSON formātā:\n"
+            '{"summary":"[1-2 teikumi par galveno ietaupījuma iespēju]", '
+            '"priority":"augsta|vidēja|zema", '
+            '"actions":[{"title":"...", "reason":"...", "impact":"..."}], '
+            '"tomorrowPlan":[{"time":"...", "action":"...", "why":"..."}]}\n'
+            f"Dati: {json.dumps(context, ensure_ascii=False)}"
+        )
     return (
         "Tu esi enerģijas pārvaldības AI konsultants Latvijā. "
         "Analizē dotos aprēķinus un sagatavo īsu, biznesisku rekomendāciju tikai no sniegtajiem datiem. "
@@ -132,8 +141,8 @@ def _build_ai_prompt(context):
     )
 
 
-def _call_local_ai(prompt):
-    """Call local Ollama AI service."""
+def _call_local_ai(prompt, temperature=0.2):
+    """Call local Ollama AI service with specified temperature."""
     payload = json.dumps(
         {
             "model": LOCAL_AI_MODEL,
@@ -141,7 +150,7 @@ def _call_local_ai(prompt):
             "stream": False,
             "format": "json",
             "options": {
-                "temperature": 0.2,
+                "temperature": temperature,
                 "num_predict": 220,
             },
         }
@@ -154,6 +163,59 @@ def _call_local_ai(prompt):
     )
     with urllib.request.urlopen(request, timeout=LOCAL_AI_TIMEOUT_SECONDS) as response:
         return json.loads(response.read().decode("utf-8"))
+
+
+def _call_local_ai_with_retry(context, default_actions, default_tomorrow_plan, default_summary):
+    """Call AI with retry logic: progressive simplification and temperature adjustment."""
+    retry_configs = [
+        {"prompt_fn": lambda: _build_ai_prompt(context, simplified=False), "temperature": 0.2, "attempt": 1},
+        {"prompt_fn": lambda: _build_ai_prompt(context, simplified=False), "temperature": 0.1, "attempt": 2},
+        {"prompt_fn": lambda: _build_ai_prompt(context, simplified=True), "temperature": 0.1, "attempt": 3},
+    ]
+
+    last_error = None
+    last_response = None
+
+    for config in retry_configs:
+        try:
+            prompt = config["prompt_fn"]()
+            response = _call_local_ai(prompt, temperature=config["temperature"])
+            parsed = _extract_json_object(response.get("response", ""))
+            if parsed:
+                return {
+                    "status": "ready",
+                    "parsed": parsed,
+                    "raw_response": response,
+                    "attempt": config["attempt"],
+                }
+        except (json.JSONDecodeError, ValueError) as e:
+            last_error = e
+            last_response = response
+            continue
+        except urllib.error.URLError as e:
+            raise e
+
+    # If structured JSON parsing failed, try text extraction fallback
+    if last_response:
+        raw_text = str((last_response or {}).get("response") or "").strip()
+        if raw_text:
+            return {
+                "status": "partial",
+                "raw_text": raw_text,
+                "raw_response": last_response,
+                "attempt": "fallback_text",
+            }
+
+    # All retries exhausted
+    return {
+        "status": "failed",
+        "error": str(last_error),
+        "defaults": {
+            "actions": default_actions,
+            "tomorrowPlan": default_tomorrow_plan,
+            "summary": default_summary,
+        },
+    }
 
 
 def build_ai_consultant(selected_object, insights, inputs, tomorrow_prices, has_solar, solar_summary, rank, portfolio_size, default_actions, default_tomorrow_plan, default_summary):
@@ -196,20 +258,50 @@ def build_ai_consultant(selected_object, insights, inputs, tomorrow_prices, has_
     if cached is not None:
         return cached
 
-    raw_response = None
     try:
-        raw_response = _call_local_ai(_build_ai_prompt(context))
-        parsed = _extract_json_object(raw_response.get("response", ""))
-        result = {
-            "status": "ready",
-            "provider": "local-ollama",
-            "model": LOCAL_AI_MODEL,
-            "headline": "AI konsultanta kopsavilkums",
-            "summary": str(parsed.get("summary") or "").strip() or default_summary,
-            "actions": _normalize_ai_actions(parsed.get("actions")) or default_actions,
-            "tomorrowPlan": _normalize_ai_tomorrow_plan(parsed.get("tomorrowPlan")) or default_tomorrow_plan,
-            "priority": _normalize_ai_priority(parsed.get("priority")),
-        }
+        retry_result = _call_local_ai_with_retry(context, default_actions, default_tomorrow_plan, default_summary)
+
+        if retry_result["status"] == "ready":
+            # Successfully parsed JSON from AI response
+            parsed = retry_result["parsed"]
+            result = {
+                "status": "ready",
+                "provider": "local-ollama",
+                "model": LOCAL_AI_MODEL,
+                "headline": "AI konsultanta kopsavilkums",
+                "summary": str(parsed.get("summary") or "").strip() or default_summary,
+                "actions": _normalize_ai_actions(parsed.get("actions")) or default_actions,
+                "tomorrowPlan": _normalize_ai_tomorrow_plan(parsed.get("tomorrowPlan")) or default_tomorrow_plan,
+                "priority": _normalize_ai_priority(parsed.get("priority")),
+            }
+        elif retry_result["status"] == "partial":
+            # Successfully extracted summary text from partial response
+            raw_text = retry_result["raw_text"]
+            result = {
+                "status": "ready",
+                "provider": "local-ollama",
+                "model": LOCAL_AI_MODEL,
+                "headline": "AI konsultanta kopsavilkums",
+                "summary": _extract_summary_text(raw_text) or default_summary,
+                "actions": default_actions,
+                "tomorrowPlan": default_tomorrow_plan,
+                "priority": "vidēja",
+            }
+        else:
+            # All retries exhausted, use defaults
+            result = {
+                "status": "error",
+                "provider": "local-ollama",
+                "model": LOCAL_AI_MODEL,
+                "headline": "AI konsultants neatbildēja korekti",
+                "summary": (
+                    "Lokālais AI modelis (pēc 3 mēģinājumiem ar dažādiem parametriem) "
+                    "neatgrieza izmantojamu atbildi. Panelis rāda klasiskos aprēķinu ieteikumus."
+                ),
+                "actions": default_actions,
+                "tomorrowPlan": default_tomorrow_plan,
+                "priority": "vidēja",
+            }
     except urllib.error.URLError:
         result = {
             "status": "unavailable",
@@ -224,33 +316,6 @@ def build_ai_consultant(selected_object, insights, inputs, tomorrow_prices, has_
             "tomorrowPlan": default_tomorrow_plan,
             "priority": "vidēja",
         }
-    except (json.JSONDecodeError, ValueError):
-        raw_text = str((raw_response or {}).get("response") or "").strip()
-        if raw_text:
-            result = {
-                "status": "ready",
-                "provider": "local-ollama",
-                "model": LOCAL_AI_MODEL,
-                "headline": "AI konsultanta kopsavilkums",
-                "summary": _extract_summary_text(raw_text) or default_summary,
-                "actions": default_actions,
-                "tomorrowPlan": default_tomorrow_plan,
-                "priority": "vidēja",
-            }
-        else:
-            result = {
-                "status": "error",
-                "provider": "local-ollama",
-                "model": LOCAL_AI_MODEL,
-                "headline": "AI konsultants neatbildēja korekti",
-                "summary": (
-                    "Lokālais AI modelis neatgrieza izmantojamu atbildi JSON formātā. "
-                    "Pārbaudi, vai modelis ir ielādēts un spēj atbildēt strukturētā formā."
-                ),
-                "actions": default_actions,
-                "tomorrowPlan": default_tomorrow_plan,
-                "priority": "vidēja",
-            }
     except TimeoutError:
         result = {
             "status": "unavailable",
