@@ -1,2 +1,7 @@
 __pycache__/
 *.pyc
+.venv/
+data/app-data.json
+data/selected-source.json
+~$*.xlsx
+ko vēl uzlabot.txt

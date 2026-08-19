@@ -151,7 +151,7 @@ def _call_local_ai(prompt, temperature=0.2):
             "format": "json",
             "options": {
                 "temperature": temperature,
-                "num_predict": 220,
+                "num_predict": 700,
             },
         }
     ).encode("utf-8")

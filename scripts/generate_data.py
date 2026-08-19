@@ -129,6 +129,8 @@ def load_consumption_data(consumption_file):
             if parsed_row["grid_export"] > 0:
                 export_profile[hour_label(parsed_row["interval"])].append(parsed_row["grid_export"])
 
+        if not consumptions:
+            continue
         sorted_consumptions = sorted(consumptions)
         mean_consumption = sum(consumptions) / len(consumptions)
         variance = sum((value - mean_consumption) ** 2 for value in consumptions) / len(consumptions)
@@ -273,6 +275,8 @@ def load_price_data():
                 }
             )
 
+    if not hourly_by_date:
+        raise ValueError("Nav atrasti derīgi cenu dati Excel failā.")
     latest_date = max(hourly_by_date)
     latest_hourly = hourly_by_date[latest_date]
     cheapest_hours = sorted(latest_hourly, key=lambda item: item["price"])[:3]

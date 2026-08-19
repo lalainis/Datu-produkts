@@ -115,6 +115,7 @@ def ensure_dataset(force=False):
             [sys.executable, str(BASE_DIR / "scripts" / "generate_data.py"), "--source", str(active_source)],
             cwd=BASE_DIR,
             check=True,
+            timeout=120,
         )
 
 
