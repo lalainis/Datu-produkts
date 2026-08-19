@@ -63,6 +63,8 @@ const refs = {
   planTableBody: document.getElementById("planTableBody"),
   dailyTrendChart: document.getElementById("dailyTrendChart"),
   alertsTableBody: document.getElementById("alertsTableBody"),
+  dashboardContent: document.getElementById("dashboardContent"),
+  portfolioReportContent: document.getElementById("portfolioReportContent"),
 };
 
 const numberFormat = new Intl.NumberFormat("lv-LV", {
@@ -188,6 +190,7 @@ function wireEvents() {
     }
 
     renderPortfolio(state.bootstrap.portfolio);
+    updateCompareButton();
   });
 
   refs.portfolioBody.addEventListener("click", (event) => {
@@ -207,12 +210,18 @@ function wireEvents() {
     state.selectedPortfolioIds.add(objectId);
     refs.objectSelect.value = objectId;
     renderPortfolio(state.bootstrap.portfolio);
+    updateCompareButton();
     restoreSavedInputs(objectId);
     refreshDashboard("Atjauno atlasītā objekta skatu...");
   });
 
   refs.compareButton.addEventListener("click", () => {
     if (state.selectedPortfolioIds.size === 0) {
+      return;
+    }
+
+    if (state.selectedPortfolioIds.size >= 2) {
+      openPortfolioReport();
       return;
     }
 
@@ -383,6 +392,7 @@ function applyBootstrapData(bootstrap, preferredObjectId) {
   populateObjectSelect(bootstrap.objects, resolvedObjectId);
   renderGlobalSummary(bootstrap);
   renderPortfolio(bootstrap.portfolio);
+  updateCompareButton();
   restoreSavedInputs(resolvedObjectId);
 }
 
@@ -1271,6 +1281,208 @@ async function fetchJson(url, options = undefined) {
 
 function formatDateTime(value) {
   return new Date(value).toLocaleString("lv-LV");
+}
+
+function updateCompareButton() {
+  const count = state.selectedPortfolioIds.size;
+  if (count >= 2) {
+    refs.compareButton.textContent = `Ģenerēt pārskatu (${count} objekti)`;
+    refs.compareButton.classList.add("primary-button");
+    refs.compareButton.classList.remove("secondary-button");
+  } else {
+    refs.compareButton.textContent = "Rādīt scenāriju";
+    refs.compareButton.classList.remove("primary-button");
+    refs.compareButton.classList.add("secondary-button");
+  }
+}
+
+async function openPortfolioReport() {
+  setLoadingState(true, "Ģenerē portfeļa pārskatu...");
+  try {
+    const objectIds = Array.from(state.selectedPortfolioIds).join(",");
+    const params = new URLSearchParams({
+      objectIds,
+      clientType: state.clientType,
+      hasSolar: state.hasSolar ? "yes" : "no",
+      area: refs.areaInput.value || "0",
+      equipmentCount: refs.equipmentCountInput.value || "0",
+      equipmentPowerWatts: refs.equipmentPowerInput.value || "0",
+      solarCapacityKw: refs.solarCapacityInput.value || "0",
+    });
+    const data = await fetchJson(`/api/portfolio-report?${params.toString()}`);
+    renderPortfolioReport(data);
+    refs.dashboardContent.hidden = true;
+    refs.portfolioReportContent.hidden = false;
+    refs.portfolioReportContent.scrollIntoView({ behavior: "smooth", block: "start" });
+    setLoadingState(false, "Portfeļa pārskats gatavs.");
+  } catch (error) {
+    console.error(error);
+    setLoadingState(false, "Kļūda ģenerējot pārskatu.");
+  }
+}
+
+function closePortfolioReport() {
+  refs.portfolioReportContent.hidden = true;
+  refs.dashboardContent.hidden = false;
+}
+
+function renderPortfolioReport(data) {
+  const { objects } = data;
+  const global = state.bootstrap.globalSummary;
+
+  refs.portfolioReportContent.innerHTML = `
+    <div class="report-nav">
+      <button class="secondary-button compact-button" id="reportBackButton">← Atpakaļ</button>
+      <strong>Portfeļa pārskats · ${objects.length} objekti</strong>
+    </div>
+
+    <section class="panel">
+      <div class="panel-title-row">
+        <div>
+          <h2>Portfeļa kopsavilkums</h2>
+          <p>Kopējie rādītāji visiem ${escapeHtml(String(global.objectCount))} portfeļa objektiem.</p>
+        </div>
+      </div>
+      <div class="hero-global-grid">
+        ${[
+          { label: "Objekti portfelī", value: integerFormat.format(global.objectCount), note: "Datu faila kopējais skaits." },
+          { label: "Kopējais patēriņš", value: `${integerFormat.format(global.totalConsumption)} kWh`, note: "Visi portfeļa objekti." },
+          { label: "Kopējās izmaksas", value: `${integerFormat.format(global.totalCost)} EUR`, note: "Vēsturiskās biržas cenas." },
+          { label: "Kopējās anomālijas", value: `${integerFormat.format(global.totalAnomalies)} not.`, note: "Stundas virs limita vai pīķa." },
+        ].map((c) => `
+          <article class="global-card">
+            <span>${escapeHtml(c.label)}</span>
+            <strong>${escapeHtml(c.value)}</strong>
+            <small>${escapeHtml(c.note)}</small>
+          </article>
+        `).join("")}
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-title-row">
+        <div>
+          <h2>Salīdzinājums pa objektiem</h2>
+          <p>Atlasītie ${objects.length} objekti — galvenie rādītāji blakus.</p>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Objekts</th>
+              <th>Vieta</th>
+              <th>Patēriņš</th>
+              <th>Izmaksas</th>
+              <th>Pīķis (kWh)</th>
+              <th>Ietaupījums</th>
+              <th>Anomālijas</th>
+              <th>Sl. samazin.</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${objects.map((obj) => {
+              const consumption = obj.cards[0] ? obj.cards[0].value : 0;
+              const cost = obj.cards[1] ? obj.cards[1].value : 0;
+              const peak = obj.cards[2] ? obj.cards[2].value : 0;
+              const anomalies = obj.cards[5] ? obj.cards[5].value : 0;
+              return `
+                <tr>
+                  <td><strong>${escapeHtml(obj.name)}</strong><br><small>${escapeHtml(obj.id)}</small></td>
+                  <td>${escapeHtml(String(obj.rank))}. / ${escapeHtml(String(obj.portfolioSize))}</td>
+                  <td>${escapeHtml(integerFormat.format(consumption))} kWh</td>
+                  <td>${escapeHtml(integerFormat.format(cost))} EUR</td>
+                  <td>${escapeHtml(numberFormat.format(peak))}</td>
+                  <td>${escapeHtml(numberFormat.format(obj.potentialSavings))} EUR/d</td>
+                  <td>${escapeHtml(String(anomalies))}</td>
+                  <td>${escapeHtml(numberFormat.format(obj.loadReductionKw))} kW</td>
+                </tr>
+              `;
+            }).join("")}
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-title-row">
+        <div>
+          <h2>Gada izmaksas pa objektiem</h2>
+          <p>Vizuāls salīdzinājums — augstāks stabs nozīmē lielākas izmaksas.</p>
+        </div>
+      </div>
+      ${renderReportCostBars(objects)}
+    </section>
+
+    ${objects.map((obj) => renderReportObjectSection(obj)).join("")}
+  `;
+
+  document.getElementById("reportBackButton").addEventListener("click", closePortfolioReport);
+}
+
+function renderReportCostBars(objects) {
+  const maxCost = Math.max(...objects.map((obj) => obj.cards[1] ? obj.cards[1].value : 0), 1);
+  return `
+    <div class="bars">
+      ${objects.map((obj) => {
+        const cost = obj.cards[1] ? obj.cards[1].value : 0;
+        const height = Math.max(20, Math.round((cost / maxCost) * 190));
+        const shortName = obj.name.length > 14 ? obj.name.slice(0, 13) + "…" : obj.name;
+        return `
+          <div class="bar-col" title="${escapeHtml(obj.name)}: ${escapeHtml(integerFormat.format(cost))} EUR">
+            <div class="bar-value">${escapeHtml(integerFormat.format(cost))}</div>
+            <div class="bar neutral" style="height:${height}px"></div>
+            <div class="bar-caption" style="font-size:0.6rem">${escapeHtml(shortName)}</div>
+          </div>
+        `;
+      }).join("")}
+    </div>
+  `;
+}
+
+function renderReportObjectSection(obj) {
+  const chips = (obj.statusChips || [])
+    .map((chip) => `<span class="chip ${chip.tone}">${escapeHtml(chip.label)}</span>`)
+    .join("");
+
+  const cards = (obj.cards || [])
+    .map((card) => `
+      <article class="metric-card">
+        <span class="metric-label">${escapeHtml(card.label)}</span>
+        <strong>${escapeHtml(numberFormat.format(card.value))} ${escapeHtml(card.unit)}</strong>
+        <small>${escapeHtml(card.note)}</small>
+      </article>
+    `).join("");
+
+  const recs = (obj.recommendations || [])
+    .map((rec) => `
+      <article class="recommendation ${rec.tone}">
+        <div class="recommendation-top">
+          <h3>${escapeHtml(rec.title)}</h3>
+          <span class="recommendation-metric">${escapeHtml(rec.metric)}</span>
+        </div>
+        <p>${escapeHtml(rec.text)}</p>
+      </article>
+    `).join("");
+
+  const solarChip = obj.hasSolar ? '<span class="chip success">SES</span>' : "";
+
+  return `
+    <section class="panel">
+      <div class="panel-title-row">
+        <div>
+          <h2>${escapeHtml(obj.name)}</h2>
+          <p>${escapeHtml(obj.rank)}. vieta portfelī · ${escapeHtml(obj.clientTypeLabel)} · Periods: ${escapeHtml(obj.period.start)} – ${escapeHtml(obj.period.end)}</p>
+        </div>
+      </div>
+      <div class="chip-row">
+        ${solarChip}
+        ${chips}
+      </div>
+      <div class="card-grid" style="margin-top:1rem">${cards}</div>
+      <div class="recommendations" style="margin-top:1rem">${recs}</div>
+    </section>
+  `;
 }
 
 function escapeHtml(value) {

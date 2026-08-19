@@ -91,6 +91,53 @@ def get_bootstrap_data():
     }
 
 
+def get_portfolio_report_data(object_ids, query_args):
+    """Get compact analytics report for multiple objects without AI."""
+    data = load_dataset()
+    client_type = normalize_client_type(query_args.get("clientType"))
+
+    results = []
+    for object_id in object_ids:
+        selected_object = next((item for item in data["objects"] if item["id"] == object_id), None)
+        if selected_object is None:
+            continue
+
+        has_solar = normalize_solar_setting(
+            query_args.get("hasSolar"),
+            fallback=selected_object.get("solar", {}).get("detected", data.get("sourceHasSolar", False)),
+        )
+        inputs = {
+            "area": _parse_number(query_args.get("area")),
+            "equipmentCount": _parse_number(query_args.get("equipmentCount")),
+            "equipmentPowerWatts": _parse_number(query_args.get("equipmentPowerWatts")),
+            "solarCapacityKw": _parse_number(query_args.get("solarCapacityKw")),
+        }
+
+        insights = build_insights(selected_object, inputs, data["tomorrowPrices"], client_type, has_solar)
+        rank, portfolio_size = get_portfolio_rank_and_size(object_id)
+
+        results.append({
+            "id": selected_object["id"],
+            "name": selected_object["name"],
+            "rank": rank,
+            "portfolioSize": portfolio_size,
+            "clientTypeLabel": insights["clientTypeLabel"],
+            "hasSolar": has_solar,
+            "cards": build_cards(selected_object, insights),
+            "loadReductionKw": round(insights["loadReductionKw"], 1),
+            "shiftableEnergy": round(insights["shiftableEnergy"], 1),
+            "potentialSavings": insights["potentialSavings"],
+            "recommendations": insights["recommendations"][:3],
+            "statusChips": insights["statusChips"],
+            "period": {
+                "start": selected_object["summary"]["periodStart"],
+                "end": selected_object["summary"]["periodEnd"],
+            },
+        })
+
+    return {"objects": results}
+
+
 def get_dashboard_data(object_id, query_args):
     """Get detailed dashboard data for an object without rebuilding full portfolio."""
     from analytics import _parse_number

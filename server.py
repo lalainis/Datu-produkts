@@ -1,6 +1,6 @@
 from flask import Flask, jsonify, request, send_from_directory
 
-from backend_service import get_bootstrap_data, get_dashboard_data
+from backend_service import get_bootstrap_data, get_dashboard_data, get_portfolio_report_data
 from data_loader import (
     BASE_DIR,
     load_dataset,
@@ -61,6 +61,16 @@ def source():
         return jsonify({"error": error.args[0]}), 404
 
     return jsonify(get_bootstrap_data())
+
+
+@app.get("/api/portfolio-report")
+def portfolio_report():
+    raw_ids = request.args.get("objectIds") or ""
+    object_ids = [oid.strip() for oid in raw_ids.split(",") if oid.strip()]
+    if not object_ids:
+        return jsonify({"error": "Missing required query parameter 'objectIds'"}), 400
+    payload = get_portfolio_report_data(object_ids, request.args)
+    return jsonify(payload)
 
 
 @app.get("/api/dashboard")
