@@ -1,4 +1,4 @@
-from flask import Flask, jsonify, request, send_from_directory
+from flask import Flask, jsonify, request, send_file, send_from_directory
 
 from backend_service import get_bootstrap_data, get_dashboard_data, get_portfolio_report_data
 from data_loader import (
@@ -28,7 +28,7 @@ def script():
 
 @app.get("/logo.png")
 def logo():
-    return send_from_directory(BASE_DIR, "Elektrum_Business_Logo_RGB_Black.png")
+    return send_file(BASE_DIR / "Elektrum_Business_Logo_RGB_Black.png", mimetype="image/png")
 
 
 @app.get("/api/health")

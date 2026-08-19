@@ -271,7 +271,7 @@ def build_ai_consultant(selected_object, insights, inputs, tomorrow_prices, has_
                 "headline": "AI konsultanta kopsavilkums",
                 "summary": str(parsed.get("summary") or "").strip() or default_summary,
                 "actions": _normalize_ai_actions(parsed.get("actions")) or default_actions,
-                "tomorrowPlan": _normalize_ai_tomorrow_plan(parsed.get("tomorrowPlan")) or default_tomorrow_plan,
+                "tomorrowPlan": default_tomorrow_plan,
                 "priority": _normalize_ai_priority(parsed.get("priority")),
             }
         elif retry_result["status"] == "partial":
