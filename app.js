@@ -5,6 +5,7 @@ const state = {
   selectedPortfolioIds: new Set(),
   clientType: "office",
   hasSolar: false,
+  fixedPriceMode: false,
   requestToken: 0,
   activeModalChartId: null,
 };
@@ -65,6 +66,14 @@ const refs = {
   alertsTableBody: document.getElementById("alertsTableBody"),
   dashboardContent: document.getElementById("dashboardContent"),
   portfolioReportContent: document.getElementById("portfolioReportContent"),
+  startupPriceTypeSelect: document.getElementById("startupPriceTypeSelect"),
+  startupFixedPriceField: document.getElementById("startupFixedPriceField"),
+  startupFixedPriceInput: document.getElementById("startupFixedPriceInput"),
+  priceTypeSelect: document.getElementById("priceTypeSelect"),
+  fixedPriceField: document.getElementById("fixedPriceField"),
+  fixedPriceInput: document.getElementById("fixedPriceInput"),
+  priceComparisonSection: document.getElementById("priceComparisonSection"),
+  priceComparisonContent: document.getElementById("priceComparisonContent"),
 };
 
 const numberFormat = new Intl.NumberFormat("lv-LV", {
@@ -129,6 +138,14 @@ function wireEvents() {
     applySolarSelection(refs.startupSolarSelect.value);
   });
 
+  refs.startupPriceTypeSelect.addEventListener("change", () => {
+    applyPriceTypeSelection(refs.startupPriceTypeSelect.value);
+  });
+
+  refs.startupFixedPriceInput.addEventListener("input", () => {
+    refs.fixedPriceInput.value = refs.startupFixedPriceInput.value;
+  });
+
   refs.startupImportButton.addEventListener("click", async () => {
     refs.sourceSelect.value = refs.startupSourceSelect.value;
     applyClientTypeSelection(refs.startupClientTypeSelect.value);
@@ -152,6 +169,19 @@ function wireEvents() {
     applySolarSelection(refs.solarSelect.value);
     saveSolarSelection();
     refreshDashboard("Pielāgo scenāriju SES profilam...");
+  });
+
+  refs.priceTypeSelect.addEventListener("change", () => {
+    applyPriceTypeSelection(refs.priceTypeSelect.value);
+    refreshDashboard("Pielāgo cenas scenāriju...");
+  });
+
+  refs.fixedPriceInput.addEventListener("input", () => {
+    refs.startupFixedPriceInput.value = refs.fixedPriceInput.value;
+    window.clearTimeout(inputTimer);
+    inputTimer = window.setTimeout(() => {
+      refreshDashboard("Pārrēķina ar fiksēto cenu...");
+    }, 400);
   });
 
   refs.importSourceButton.addEventListener("click", async () => {
@@ -299,6 +329,7 @@ async function refreshDashboard(message) {
   setLoadingState(true, message);
   renderChartLoadingState();
   try {
+    const fixedPriceEurKwh = state.fixedPriceMode ? (parseFloat(refs.fixedPriceInput.value) || 0) : 0;
     const params = new URLSearchParams({
       objectId: state.selectedObjectId,
       clientType: state.clientType,
@@ -307,6 +338,7 @@ async function refreshDashboard(message) {
       equipmentCount: refs.equipmentCountInput.value || "0",
       equipmentPowerWatts: refs.equipmentPowerInput.value || "0",
       solarCapacityKw: refs.solarCapacityInput.value || "0",
+      fixedPriceEurMwh: fixedPriceEurKwh > 0 ? (fixedPriceEurKwh * 1000).toString() : "0",
     });
 
     const dashboard = await fetchJson(`/api/dashboard?${params.toString()}`);
@@ -625,6 +657,58 @@ function applySolarSelection(value) {
   refs.solarCapacityInput.disabled = !state.hasSolar;
 }
 
+function applyPriceTypeSelection(value) {
+  state.fixedPriceMode = value === "fixed";
+  refs.priceTypeSelect.value = value;
+  refs.startupPriceTypeSelect.value = value;
+  refs.fixedPriceField.hidden = !state.fixedPriceMode;
+  refs.startupFixedPriceField.hidden = !state.fixedPriceMode;
+  refs.fixedPriceInput.disabled = !state.fixedPriceMode;
+  refs.startupFixedPriceInput.disabled = !state.fixedPriceMode;
+}
+
+function renderPriceComparison(comparison) {
+  if (!refs.priceComparisonSection || !refs.priceComparisonContent) {
+    return;
+  }
+  if (!comparison) {
+    refs.priceComparisonSection.hidden = true;
+    return;
+  }
+
+  refs.priceComparisonSection.hidden = false;
+
+  const diff = comparison.savingsEur;
+  const diffLabel = diff > 0
+    ? `Biržas cena ir dārgāka par ${numberFormat.format(Math.abs(diff))} EUR`
+    : diff < 0
+    ? `Fiksētā cena ir dārgāka par ${numberFormat.format(Math.abs(diff))} EUR`
+    : "Izmaksas ir vienādas";
+  const diffTone = diff > 0 ? "success" : diff < 0 ? "danger" : "neutral";
+
+  const maxCost = Math.max(comparison.marketCostEur, comparison.fixedCostEur, 0.01);
+  const marketBar = Math.round((comparison.marketCostEur / maxCost) * 100);
+  const fixedBar = Math.round((comparison.fixedCostEur / maxCost) * 100);
+
+  refs.priceComparisonContent.innerHTML = `
+    <div class="price-cmp-grid">
+      <div class="price-cmp-card">
+        <span class="price-cmp-label">Biržas cena (SPOT)</span>
+        <strong class="price-cmp-value">${numberFormat.format(comparison.marketCostEur)} EUR</strong>
+        <small>${numberFormat.format(comparison.totalConsumptionKwh)} kWh × vidējā tirgus cena</small>
+        <div class="price-cmp-bar" style="width:${marketBar}%" aria-hidden="true"></div>
+      </div>
+      <div class="price-cmp-card">
+        <span class="price-cmp-label">Fiksētā cena</span>
+        <strong class="price-cmp-value">${numberFormat.format(comparison.fixedCostEur)} EUR</strong>
+        <small>${numberFormat.format(comparison.totalConsumptionKwh)} kWh × ${numberFormat.format(comparison.fixedPriceEurKwh * 100)} c/kWh</small>
+        <div class="price-cmp-bar price-cmp-bar-fixed" style="width:${Math.min(fixedBar, 100)}%" aria-hidden="true"></div>
+      </div>
+    </div>
+    <p class="price-cmp-verdict ${diffTone}">${escapeHtml(diffLabel)} dienā (${escapeHtml(comparison.date)})</p>
+  `;
+}
+
 function renderGlobalSummary(bootstrap) {
   refs.generatedAt.textContent = `Datu ģenerēšana: ${formatDateTime(bootstrap.generatedAt)}`;
 
@@ -713,6 +797,7 @@ function renderDashboard(dashboard) {
   renderSolarComparisonChart(dashboard.charts.solarComparison, dashboard.hasSolar);
   renderPlanChart(dashboard.planRows);
   renderPlanTable(dashboard.planRows);
+  renderPriceComparison(dashboard.priceComparison);
   renderDailyTrend(dashboard.charts.dailyTrend);
   renderAlerts(dashboard.alerts);
 }

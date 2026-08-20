@@ -1,138 +1,138 @@
 {
-  "generatedAt": "2026-08-19T09:56:47Z",
+  "generatedAt": "2026-08-20T13:39:11Z",
   "sourceFile": "ofisu komplekss.xlsx",
   "sourceHasSolar": false,
   "marketPricePeriod": {
     "startDate": "2026-07-31",
-    "endDate": "2026-08-13"
+    "endDate": "2026-08-22"
   },
   "tomorrowPrices": {
-    "date": "2026-08-13",
+    "date": "2026-08-22",
     "hourly": [
       {
         "hour": "00:00",
-        "price": 145.53
+        "price": 7.5
       },
       {
         "hour": "01:00",
-        "price": 139.87
+        "price": 4.19
       },
       {
         "hour": "02:00",
-        "price": 134.51
+        "price": 3.4
       },
       {
         "hour": "03:00",
-        "price": 131.71
+        "price": 3.12
       },
       {
         "hour": "04:00",
-        "price": 142.56
+        "price": 2.96
       },
       {
         "hour": "05:00",
-        "price": 150.0
+        "price": 3.66
       },
       {
         "hour": "06:00",
-        "price": 157.47
+        "price": 5.77
       },
       {
         "hour": "07:00",
-        "price": 139.63
+        "price": 6.38
       },
       {
         "hour": "08:00",
-        "price": 126.17
+        "price": 6.46
       },
       {
         "hour": "09:00",
-        "price": 84.02
+        "price": 4.27
       },
       {
         "hour": "10:00",
-        "price": 75.49
+        "price": 2.72
       },
       {
         "hour": "11:00",
-        "price": 66.83
+        "price": 1.99
       },
       {
         "hour": "12:00",
-        "price": 52.91
+        "price": 1.63
       },
       {
         "hour": "13:00",
-        "price": 49.8
+        "price": 1.61
       },
       {
         "hour": "14:00",
-        "price": 50.11
+        "price": 1.53
       },
       {
         "hour": "15:00",
-        "price": 59.78
+        "price": 1.68
       },
       {
         "hour": "16:00",
-        "price": 82.47
+        "price": 3.71
       },
       {
         "hour": "17:00",
-        "price": 135.22
+        "price": 8.7
       },
       {
         "hour": "18:00",
-        "price": 189.84
+        "price": 46.65
       },
       {
         "hour": "19:00",
-        "price": 261.3
+        "price": 145.17
       },
       {
         "hour": "20:00",
-        "price": 229.6
+        "price": 166.17
       },
       {
         "hour": "21:00",
-        "price": 199.48
+        "price": 164.4
       },
       {
         "hour": "22:00",
-        "price": 162.74
+        "price": 150.45
       },
       {
         "hour": "23:00",
-        "price": 144.23
+        "price": 134.0
       }
     ],
-    "averagePrice": 129.64,
+    "averagePrice": 36.59,
     "cheapestHours": [
       {
         "hour": "12:00",
-        "price": 52.91
+        "price": 1.63
       },
       {
         "hour": "13:00",
-        "price": 49.8
+        "price": 1.61
       },
       {
         "hour": "14:00",
-        "price": 50.11
+        "price": 1.53
       }
     ],
     "expensiveHours": [
       {
-        "hour": "19:00",
-        "price": 261.3
-      },
-      {
         "hour": "20:00",
-        "price": 229.6
+        "price": 166.17
       },
       {
         "hour": "21:00",
-        "price": 199.48
+        "price": 164.4
+      },
+      {
+        "hour": "22:00",
+        "price": 150.45
       }
     ]
   },
@@ -211,15 +211,69 @@
     },
     {
       "date": "2026-08-12",
-      "averagePrice": 123.47,
-      "minPrice": 17.88,
-      "maxPrice": 252.78
+      "averagePrice": 56.94,
+      "minPrice": 8.63,
+      "maxPrice": 134.99
     },
     {
       "date": "2026-08-13",
-      "averagePrice": 129.64,
-      "minPrice": 49.8,
-      "maxPrice": 261.3
+      "averagePrice": 29.42,
+      "minPrice": 3.19,
+      "maxPrice": 100.0
+    },
+    {
+      "date": "2026-08-14",
+      "averagePrice": 69.15,
+      "minPrice": 16.24,
+      "maxPrice": 183.12
+    },
+    {
+      "date": "2026-08-15",
+      "averagePrice": 80.94,
+      "minPrice": 27.85,
+      "maxPrice": 155.15
+    },
+    {
+      "date": "2026-08-16",
+      "averagePrice": 65.69,
+      "minPrice": 20.11,
+      "maxPrice": 155.59
+    },
+    {
+      "date": "2026-08-17",
+      "averagePrice": 13.95,
+      "minPrice": 2.68,
+      "maxPrice": 54.99
+    },
+    {
+      "date": "2026-08-18",
+      "averagePrice": 11.17,
+      "minPrice": 1.81,
+      "maxPrice": 46.4
+    },
+    {
+      "date": "2026-08-19",
+      "averagePrice": 9.4,
+      "minPrice": 0.56,
+      "maxPrice": 45.06
+    },
+    {
+      "date": "2026-08-20",
+      "averagePrice": 23.72,
+      "minPrice": 0.0,
+      "maxPrice": 148.18
+    },
+    {
+      "date": "2026-08-21",
+      "averagePrice": 21.68,
+      "minPrice": 3.23,
+      "maxPrice": 71.18
+    },
+    {
+      "date": "2026-08-22",
+      "averagePrice": 36.59,
+      "minPrice": 1.53,
+      "maxPrice": 166.17
     }
   ],
   "objects": [

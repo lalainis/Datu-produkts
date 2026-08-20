@@ -3,6 +3,7 @@ from analytics import (
     build_cards,
     build_insights,
     build_plan_rows,
+    build_price_comparison,
     build_solar_summary,
     _build_default_ai_actions,
     _build_default_ai_summary,
@@ -158,13 +159,14 @@ def get_dashboard_data(object_id, query_args):
         "equipmentPowerWatts": _parse_number(query_args.get("equipmentPowerWatts")),
         "solarCapacityKw": _parse_number(query_args.get("solarCapacityKw")),
     }
+    fixed_price_eur_mwh = _parse_number(query_args.get("fixedPriceEurMwh")) or None
 
     insights = build_insights(selected_object, inputs, data["tomorrowPrices"], client_type, has_solar)
 
     # Optimization: get rank and portfolio size without rebuilding full bootstrap
     rank, portfolio_size = get_portfolio_rank_and_size(object_id)
 
-    plan_rows = build_plan_rows(selected_object, data["tomorrowPrices"])
+    plan_rows = build_plan_rows(selected_object, data["tomorrowPrices"], fixed_price_eur_mwh)
     solar_summary = build_solar_summary(selected_object, insights, has_solar)
 
     # Prepare default values for AI consultant
@@ -226,6 +228,7 @@ def get_dashboard_data(object_id, query_args):
             "solarComparison": solar_summary["chart"],
         },
         "planRows": plan_rows,
+        "priceComparison": build_price_comparison(selected_object, data["tomorrowPrices"], fixed_price_eur_mwh),
         "alerts": selected_object["anomalies"][:12],
         "solarSummary": solar_summary,
         "benchmark": {

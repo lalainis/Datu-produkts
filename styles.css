@@ -1302,3 +1302,81 @@ tbody td {
     border-radius: 22px;
   }
 }
+
+/* ── Price comparison block ── */
+.price-cmp-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.price-cmp-card {
+  background: var(--surface-2);
+  border-radius: 12px;
+  padding: 16px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  overflow: hidden;
+  position: relative;
+}
+
+.price-cmp-label {
+  font-size: 0.75rem;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.price-cmp-value {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.price-cmp-card small {
+  font-size: 0.75rem;
+  color: var(--muted);
+  margin-bottom: 8px;
+}
+
+.price-cmp-bar {
+  height: 4px;
+  border-radius: 2px;
+  background: var(--accent);
+  transition: width 0.4s ease;
+}
+
+.price-cmp-bar-fixed {
+  background: var(--success, #4ade80);
+}
+
+.price-cmp-verdict {
+  font-size: 0.875rem;
+  font-weight: 500;
+  padding: 10px 14px;
+  border-radius: 8px;
+  margin: 0;
+}
+
+.price-cmp-verdict.success {
+  background: color-mix(in srgb, var(--success, #4ade80) 12%, transparent);
+  color: var(--success, #4ade80);
+}
+
+.price-cmp-verdict.danger {
+  background: color-mix(in srgb, var(--danger, #f87171) 12%, transparent);
+  color: var(--danger, #f87171);
+}
+
+.price-cmp-verdict.neutral {
+  background: var(--surface-2);
+  color: var(--muted);
+}
+
+@media (max-width: 640px) {
+  .price-cmp-grid {
+    grid-template-columns: 1fr;
+  }
+}

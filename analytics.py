@@ -439,7 +439,7 @@ def build_insights(selected_object, inputs, tomorrow_prices, client_type, has_so
     }
 
 
-def build_plan_rows(selected_object, tomorrow_prices):
+def build_plan_rows(selected_object, tomorrow_prices, fixed_price_eur_mwh=None):
     """Build hourly action plan rows."""
     cheap_set = {item["hour"] for item in tomorrow_prices["cheapestHours"]}
     expensive_set = {item["hour"] for item in tomorrow_prices["expensiveHours"]}
@@ -461,16 +461,45 @@ def build_plan_rows(selected_object, tomorrow_prices):
             action = "Neitrāla stunda"
             tone = "neutral"
 
-        rows.append(
-            {
-                "hour": hour,
-                "consumption": round(profile_map.get(hour, 0), 2),
-                "price": round(price_item["price"], 2),
-                "action": action,
-                "tone": tone,
-            }
-        )
+        consumption = profile_map.get(hour, 0)
+        row = {
+            "hour": hour,
+            "consumption": round(consumption, 2),
+            "price": round(price_item["price"], 2),
+            "action": action,
+            "tone": tone,
+        }
+        if fixed_price_eur_mwh:
+            row["fixedCost"] = round(consumption * fixed_price_eur_mwh / 1000, 4)
+            row["marketCost"] = round(consumption * price_item["price"] / 1000, 4)
+        rows.append(row)
     return rows
+
+
+def build_price_comparison(selected_object, tomorrow_prices, fixed_price_eur_mwh):
+    """Compare tomorrow's total cost at fixed price vs market (SPOT) price."""
+    if not fixed_price_eur_mwh:
+        return None
+
+    profile_map = {item["hour"]: item["consumption"] for item in selected_object["hourlyProfile"]}
+    price_map = {item["hour"]: item["price"] for item in tomorrow_prices["hourly"]}
+
+    market_cost = sum(
+        profile_map.get(hour, 0) * price / 1000
+        for hour, price in price_map.items()
+    )
+    total_consumption = sum(profile_map.get(hour, 0) for hour in price_map)
+    fixed_cost = total_consumption * fixed_price_eur_mwh / 1000
+
+    return {
+        "date": tomorrow_prices["date"],
+        "marketCostEur": round(market_cost, 2),
+        "fixedCostEur": round(fixed_cost, 2),
+        "fixedPriceEurMwh": round(fixed_price_eur_mwh, 2),
+        "fixedPriceEurKwh": round(fixed_price_eur_mwh / 1000, 4),
+        "totalConsumptionKwh": round(total_consumption, 1),
+        "savingsEur": round(market_cost - fixed_cost, 2),
+    }
 
 
 def build_cards(selected_object, insights):

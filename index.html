@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Enerģijas patēriņa optimizācijas panelis</title>
-  <link rel="stylesheet" href="styles.css?v=20260819-2">
+  <link rel="stylesheet" href="styles.css?v=20260820-1">
 </head>
 <body>
   <div class="startup-dialog-backdrop" id="startupDialogBackdrop">
@@ -30,6 +30,18 @@
       <label class="field">
         <span>Objektam ir SES</span>
         <select id="startupSolarSelect"></select>
+      </label>
+      <label class="field">
+        <span>Elektroenerģijas cenas tips</span>
+        <select id="startupPriceTypeSelect">
+          <option value="market">Biržas cena (SPOT)</option>
+          <option value="fixed">Fiksētā cena</option>
+        </select>
+      </label>
+      <label class="field" id="startupFixedPriceField" hidden>
+        <span>Fiksētā cena, EUR/kWh</span>
+        <input id="startupFixedPriceInput" type="number" min="0" step="0.001" placeholder="0.150">
+        <small class="field-hint">Ievadi līgumā noteikto cenu par kWh, lai salīdzinātu ar biržas cenu.</small>
       </label>
       <button id="startupImportButton" class="primary-button startup-button" type="button">Importēt un atvērt paneli</button>
     </section>
@@ -91,6 +103,20 @@
             <span>SES jauda, kW</span>
             <input id="solarCapacityInput" type="number" min="0" step="0.1" placeholder="50">
             <small class="field-hint">Ievadi uzstādīto SES jaudu, lai ieteikumi ņemtu vērā iespējamo saules izstrādi dienas vidū.</small>
+          </label>
+
+          <label class="field">
+            <span>Elektroenerģijas cenas tips</span>
+            <select id="priceTypeSelect">
+              <option value="market">Biržas cena (SPOT)</option>
+              <option value="fixed">Fiksētā cena</option>
+            </select>
+          </label>
+
+          <label class="field" id="fixedPriceField" hidden>
+            <span>Fiksētā cena, EUR/kWh</span>
+            <input id="fixedPriceInput" type="number" min="0" step="0.001" placeholder="0.150">
+            <small class="field-hint">Ievadi līgumā noteikto cenu par kWh, lai salīdzinātu ar biržas cenu.</small>
           </label>
 
           <div class="action-row source-action-row">
@@ -269,6 +295,16 @@
           <div id="spotComparisonChart" class="chart-card" aria-label="SPOT profila un klienta patēriņa salīdzinājuma grafiks" tabindex="0" role="button"></div>
         </section>
 
+        <section class="panel" id="priceComparisonSection" hidden>
+          <div class="panel-title-row">
+            <div>
+              <h2>Rītdienas izmaksu salīdzinājums</h2>
+              <p id="priceComparisonSubtitle">Salīdzinājums starp fiksēto cenu un biržas cenu nākamajai dienai.</p>
+            </div>
+          </div>
+          <div id="priceComparisonContent"></div>
+        </section>
+
         <section class="panel" id="solarComparisonSection" hidden>
           <div class="panel-title-row">
             <div>
@@ -340,6 +376,6 @@
     </main>
   </div>
 
-  <script src="app.js?v=20260819-1" defer></script>
+  <script src="app.js?v=20260820-1" defer></script>
 </body>
 </html>
